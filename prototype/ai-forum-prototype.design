@@ -1,0 +1,147 @@
+{
+  "data": [
+    {
+      "id": "page-index",
+      "title": "首页（推荐流）",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1786434809000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1405,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-07cbeb7b",
+          "measuredAt": 1786438256400
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/index.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-explore",
+      "title": "问题广场",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1786434809000,
+      "canvasData": {
+        "x": 620,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1368,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-62b63dfb",
+          "measuredAt": 1786437974974
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/explore.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-detail",
+      "title": "问题详情页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1786434809000,
+      "canvasData": {
+        "x": 1240,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 2033,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-2ad47cae",
+          "measuredAt": 1786437974974
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/detail.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-ask",
+      "title": "发布提问页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1786434809000,
+      "canvasData": {
+        "x": 1860,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1561,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-8285a4c0",
+          "measuredAt": 1786437974974
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/ask.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-search",
+      "title": "搜索结果页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1786434809000,
+      "canvasData": {
+        "x": 2480,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1452,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-8a27b187",
+          "measuredAt": 1786437974974
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/search.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-dashboard",
+      "title": "数据看板页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1786434809000,
+      "canvasData": {
+        "x": 3100,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 978,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-50912b28",
+          "measuredAt": 1786437974974
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/dashboard.html",
+        "interactions": []
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "desktop",
+    "projectName": "AI 辅助论坛原型"
+  }
+}

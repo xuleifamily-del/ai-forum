@@ -1,0 +1,80 @@
+{
+  "root": {
+    "nodeId": "gen-project-shell",
+    "kind": "project-shell",
+    "pageIds": ["page-index", "page-explore", "page-detail", "page-ask", "page-search", "page-dashboard"],
+    "output": "partials/project-shell.html",
+    "sharedRegions": ["global-nav", "search-bar", "anonymous-identity-chip", "page-background", "base-css-link", "footer-shell"],
+    "privateRegions": [],
+    "mutableSlots": ["activeNavItem", "pageTitle", "pageMainContent"],
+    "status": "generated",
+    "children": [
+      {
+        "nodeId": "gen-page-index",
+        "kind": "page-leaf",
+        "pageIds": ["page-index"],
+        "output": "pages/index.html",
+        "sharedRegions": [],
+        "privateRegions": ["hero-welcome", "recommendation-stream", "ask-cta", "identity-card"],
+        "mutableSlots": ["activeNavItem: home", "pageTitle: 首页"],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-explore",
+        "kind": "page-leaf",
+        "pageIds": ["page-explore"],
+        "output": "pages/explore.html",
+        "sharedRegions": [],
+        "privateRegions": ["sort-bar", "question-list"],
+        "mutableSlots": ["activeNavItem: explore", "pageTitle: 问题广场"],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-detail",
+        "kind": "page-leaf",
+        "pageIds": ["page-detail"],
+        "output": "pages/detail.html",
+        "sharedRegions": [],
+        "privateRegions": ["question-body", "ai-summary", "answer-list", "ai-assist-area", "inline-editor"],
+        "mutableSlots": ["activeNavItem: none", "pageTitle: 问题详情"],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-ask",
+        "kind": "page-leaf",
+        "pageIds": ["page-ask"],
+        "output": "pages/ask.html",
+        "sharedRegions": [],
+        "privateRegions": ["title-input", "body-editor", "ai-toolbar", "tag-input", "publish-actions"],
+        "mutableSlots": ["activeNavItem: none", "pageTitle: 发布提问"],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-search",
+        "kind": "page-leaf",
+        "pageIds": ["page-search"],
+        "output": "pages/search.html",
+        "sharedRegions": [],
+        "privateRegions": ["search-input", "ai-summary-results", "related-questions"],
+        "mutableSlots": ["activeNavItem: none", "pageTitle: 搜索结果"],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-dashboard",
+        "kind": "page-leaf",
+        "pageIds": ["page-dashboard"],
+        "output": "pages/dashboard.html",
+        "sharedRegions": [],
+        "privateRegions": ["ai-usage-cards", "feature-distribution", "feedback-rate", "identity-card", "data-actions"],
+        "mutableSlots": ["activeNavItem: dashboard", "pageTitle: 数据看板"],
+        "status": "planned",
+        "children": []
+      }
+    ]
+  }
+}

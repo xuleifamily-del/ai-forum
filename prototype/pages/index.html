@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页（推荐流）</title>
+    <style id="theme-vars">
+/* AI 辅助论坛原型 · 品牌颜色与字体系统 */
+
+@font-face {
+  font-family: 'InstrumentSans';
+  src: url('assets/fonts/InstrumentSans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'InstrumentSans';
+  src: url('assets/fonts/InstrumentSans-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'GeistMono';
+  src: url('assets/fonts/GeistMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  /* Primary scale — derived from #5b6cff */
+  --aif-primary-50: #eef0ff;
+  --aif-primary-100: #d8dcff;
+  --aif-primary-200: #b6bdff;
+  --aif-primary-300: #8e95ff;
+  --aif-primary-400: #6c78ff;
+  --aif-primary-500: #5b6cff;
+  --aif-primary-600: #4a59e6;
+  --aif-primary-700: #3d49be;
+  --aif-primary-800: #333e9a;
+  --aif-primary-900: #2d3779;
+
+  /* Neutral scale — derived from #1c2333 */
+  --aif-neutral-50: #f6f7f9;
+  --aif-neutral-100: #eceef2;
+  --aif-neutral-200: #e4e8f1;
+  --aif-neutral-300: #cbd2e0;
+  --aif-neutral-400: #9ba4b8;
+  --aif-neutral-500: #697386;
+  --aif-neutral-600: #4b5366;
+  --aif-neutral-700: #353b4d;
+  --aif-neutral-800: #1c2333;
+  --aif-neutral-900: #111623;
+
+  /* Semantic aliases */
+  --aif-background: #f3f5fb;
+  --aif-foreground: #1c2333;
+  --aif-card: #ffffff;
+  --aif-card-foreground: #1c2333;
+  --aif-popover: #ffffff;
+  --aif-popover-foreground: #1c2333;
+  --aif-primary: #5b6cff;
+  --aif-primary-foreground: #ffffff;
+  --aif-muted: #f6f7f9;
+  --aif-muted-foreground: #697386;
+  --aif-border: #e4e8f1;
+  --aif-input: #e4e8f1;
+  --aif-ring: #5b6cff;
+
+  /* Radius */
+  --aif-radius-small: 4px;
+  --aif-radius-medium: 8px;
+  --aif-radius-large: 12px;
+
+  /* State colors */
+  --state-success: #14b585;
+  --state-success-bg: rgba(20, 181, 133, 0.10);
+  --state-warning: #e0822e;
+  --state-warning-bg: rgba(224, 130, 46, 0.10);
+  --state-error: #ef4444;
+  --state-error-bg: rgba(239, 68, 68, 0.10);
+  --state-info: #5b6cff;
+  --state-info-bg: rgba(91, 108, 255, 0.10);
+
+  /* Typography */
+  --aif-font-title: 'InstrumentSans', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --aif-font-body: 'InstrumentSans', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --aif-font-mono: 'GeistMono', 'SFMono-Regular', Consolas, monospace;
+
+  /* Legacy aliases for direct use */
+  --bg: #f3f5fb;
+  --bg2: #ffffff;
+  --ink: #1c2333;
+  --muted: #697386;
+  --rule: #e4e8f1;
+  --accent: #5b6cff;
+  --accent2: #14b585;
+  --warn: #e0822e;
+  --font: var(--aif-font-body);
+  --font-mono: var(--aif-font-mono);
+}
+
+/* Dark mode tokens */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --aif-background: #111623;
+    --aif-foreground: #f6f7f9;
+    --aif-card: #1c2333;
+    --aif-card-foreground: #f6f7f9;
+    --aif-popover: #1c2333;
+    --aif-popover-foreground: #f6f7f9;
+    --aif-muted: #353b4d;
+    --aif-muted-foreground: #9ba4b8;
+    --aif-border: #353b4d;
+    --aif-input: #353b4d;
+    --aif-ring: #8e95ff;
+
+    --bg: #111623;
+    --bg2: #1c2333;
+    --ink: #f6f7f9;
+    --muted: #9ba4b8;
+    --rule: #353b4d;
+  }
+}
+
+html.light {
+  --aif-background: #f3f5fb;
+  --aif-foreground: #1c2333;
+  --aif-card: #ffffff;
+  --aif-card-foreground: #1c2333;
+  --aif-popover: #ffffff;
+  --aif-popover-foreground: #1c2333;
+  --aif-muted: #f6f7f9;
+  --aif-muted-foreground: #697386;
+  --aif-border: #e4e8f1;
+  --aif-input: #e4e8f1;
+  --aif-ring: #5b6cff;
+
+  --bg: #f3f5fb;
+  --bg2: #ffffff;
+  --ink: #1c2333;
+  --muted: #697386;
+  --rule: #e4e8f1;
+}
+
+html.dark {
+  --aif-background: #111623;
+  --aif-foreground: #f6f7f9;
+  --aif-card: #1c2333;
+  --aif-card-foreground: #f6f7f9;
+  --aif-popover: #1c2333;
+  --aif-popover-foreground: #f6f7f9;
+  --aif-muted: #353b4d;
+  --aif-muted-foreground: #9ba4b8;
+  --aif-border: #353b4d;
+  --aif-input: #353b4d;
+  --aif-ring: #8e95ff;
+
+  --bg: #111623;
+  --bg2: #1c2333;
+  --ink: #f6f7f9;
+  --muted: #9ba4b8;
+  --rule: #353b4d;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--aif-background);
+    --color-foreground: var(--aif-foreground);
+    --color-card: var(--aif-card);
+    --color-card-foreground: var(--aif-card-foreground);
+    --color-popover: var(--aif-popover);
+    --color-popover-foreground: var(--aif-popover-foreground);
+    --color-primary: var(--aif-primary);
+    --color-primary-foreground: var(--aif-primary-foreground);
+    --color-muted: var(--aif-muted);
+    --color-muted-foreground: var(--aif-muted-foreground);
+    --color-border: var(--aif-border);
+    --color-input: var(--aif-input);
+    --color-ring: var(--aif-ring);
+    --color-accent: var(--accent);
+    --radius-sm: var(--aif-radius-small);
+    --radius-md: var(--aif-radius-medium);
+    --radius-lg: var(--aif-radius-large);
+  }
+  @layer base {
+    body { background: var(--aif-background); color: var(--aif-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--aif-background); }
+      .text-background { color: var(--aif-background); }
+      .border-background { border-color: var(--aif-background); }
+      .ring-background { --tw-ring-color: var(--aif-background); }
+      .bg-foreground { background-color: var(--aif-foreground); }
+      .text-foreground { color: var(--aif-foreground); }
+      .border-foreground { border-color: var(--aif-foreground); }
+      .ring-foreground { --tw-ring-color: var(--aif-foreground); }
+      .bg-card { background-color: var(--aif-card); }
+      .text-card { color: var(--aif-card); }
+      .border-card { border-color: var(--aif-card); }
+      .ring-card { --tw-ring-color: var(--aif-card); }
+      .bg-card-foreground { background-color: var(--aif-card-foreground); }
+      .text-card-foreground { color: var(--aif-card-foreground); }
+      .border-card-foreground { border-color: var(--aif-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--aif-card-foreground); }
+      .bg-popover { background-color: var(--aif-popover); }
+      .text-popover { color: var(--aif-popover); }
+      .border-popover { border-color: var(--aif-popover); }
+      .ring-popover { --tw-ring-color: var(--aif-popover); }
+      .bg-popover-foreground { background-color: var(--aif-popover-foreground); }
+      .text-popover-foreground { color: var(--aif-popover-foreground); }
+      .border-popover-foreground { border-color: var(--aif-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--aif-popover-foreground); }
+      .bg-primary { background-color: var(--aif-primary); }
+      .text-primary { color: var(--aif-primary); }
+      .border-primary { border-color: var(--aif-primary); }
+      .ring-primary { --tw-ring-color: var(--aif-primary); }
+      .bg-primary-foreground { background-color: var(--aif-primary-foreground); }
+      .text-primary-foreground { color: var(--aif-primary-foreground); }
+      .border-primary-foreground { border-color: var(--aif-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--aif-primary-foreground); }
+      .bg-muted { background-color: var(--aif-muted); }
+      .text-muted { color: var(--aif-muted); }
+      .border-muted { border-color: var(--aif-muted); }
+      .ring-muted { --tw-ring-color: var(--aif-muted); }
+      .bg-muted-foreground { background-color: var(--aif-muted-foreground); }
+      .text-muted-foreground { color: var(--aif-muted-foreground); }
+      .border-muted-foreground { border-color: var(--aif-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--aif-muted-foreground); }
+      .bg-border { background-color: var(--aif-border); }
+      .text-border { color: var(--aif-border); }
+      .border-border { border-color: var(--aif-border); }
+      .ring-border { --tw-ring-color: var(--aif-border); }
+      .bg-input { background-color: var(--aif-input); }
+      .text-input { color: var(--aif-input); }
+      .border-input { border-color: var(--aif-input); }
+      .ring-input { --tw-ring-color: var(--aif-input); }
+      .bg-ring { background-color: var(--aif-ring); }
+      .text-ring { color: var(--aif-ring); }
+      .border-ring { border-color: var(--aif-ring); }
+      .ring-ring { --tw-ring-color: var(--aif-ring); }
+      .bg-accent { background-color: var(--accent); }
+      .text-accent { color: var(--accent); }
+      .border-accent { border-color: var(--accent); }
+      .ring-accent { --tw-ring-color: var(--accent); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+    <style id="critical-layout">
+      html, body { min-height: 100%; }
+      body { display: flex; flex-direction: column; }
+      main { flex: 1 1 auto; }
+      .card-hover { transition: transform .2s ease; }
+      .card-hover:hover { transform: translateY(-2px); }
+      .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      @media (prefers-reduced-motion: reduce) {
+        .card-hover { transition: none; }
+        .card-hover:hover { transform: none; }
+      }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[var(--aif-background)] font-sans antialiased">
+  <!-- Global top navigation -->
+  <header class="sticky top-0 z-50 w-full border-b border-[var(--aif-border)] bg-[var(--aif-card)]/80 backdrop-blur">
+    <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <a href="index.html" class="flex items-center gap-2 text-xl font-bold text-[var(--aif-foreground)]" data-dom-id="nav-home">
+        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--aif-primary)] text-[var(--aif-primary-foreground)]">
+          <i data-lucide="messages-square" class="h-5 w-5"></i>
+        </span>
+        <span>AI 论坛</span>
+      </a>
+
+      <nav class="hidden items-center gap-1 md:flex">
+        <a href="index.html" data-nav-key="home" data-dom-id="nav-home" data-active="true" class="nav-item rounded-md px-3 py-2 text-sm font-medium text-[var(--aif-primary)] hover:bg-[var(--aif-muted)]">首页</a>
+        <a href="explore.html" data-nav-key="explore" data-dom-id="nav-explore" class="nav-item rounded-md px-3 py-2 text-sm font-medium text-[var(--aif-muted-foreground)] hover:bg-[var(--aif-muted)] hover:text-[var(--aif-foreground)]">问题广场</a>
+        <a href="dashboard.html" data-nav-key="dashboard" data-dom-id="nav-dashboard" class="nav-item rounded-md px-3 py-2 text-sm font-medium text-[var(--aif-muted-foreground)] hover:bg-[var(--aif-muted)] hover:text-[var(--aif-foreground)]">数据看板</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <form class="relative hidden sm:block" onsubmit="return false;">
+          <input type="text" placeholder="搜索问题…" class="h-9 w-64 rounded-md border border-[var(--aif-input)] bg-[var(--aif-muted)] px-3 pr-9 text-sm text-[var(--aif-foreground)] placeholder:text-[var(--aif-muted-foreground)] focus:border-[var(--aif-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--aif-ring)]/20" />
+          <button type="submit" data-dom-id="search-submit" class="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-[var(--aif-muted-foreground)] hover:text-[var(--aif-foreground)]">
+            <i data-lucide="search" class="h-4 w-4"></i>
+          </button>
+        </form>
+        <a href="ask.html" data-dom-id="btn-ask" class="inline-flex items-center gap-1.5 rounded-md bg-[var(--aif-primary)] px-3 py-2 text-sm font-semibold text-[var(--aif-primary-foreground)] hover:bg-[var(--aif-primary-600)]">
+          <i data-lucide="plus" class="h-4 w-4"></i>
+          <span class="hidden sm:inline">提问</span>
+        </a>
+        <button class="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--aif-primary-300)] to-[var(--state-success)] text-xs font-bold text-[var(--aif-primary-foreground)]" data-dom-id="identity-chip" title="匿名身份">
+          匿
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main content region -->
+  <main class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+    <!-- Hero / welcome area -->
+    <section class="relative overflow-hidden rounded-2xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-8 sm:p-12" data-dom-id="hero-section">
+      <div class="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-[var(--aif-primary-200)]/30 blur-3xl" aria-hidden="true"></div>
+      <div class="relative z-10 max-w-2xl">
+        <h1 class="font-sans text-3xl font-bold tracking-tight text-[var(--aif-foreground)] sm:text-4xl">问得出口，答得回来</h1>
+        <p class="mt-4 text-base leading-relaxed text-[var(--aif-muted-foreground)] sm:text-lg">
+          一个匿名的 AI 辅助问答社区。提出问题，获得社区与智能助手的协同回答，让每一次讨论都更有价值。
+        </p>
+        <div class="mt-8 flex flex-wrap items-center gap-3">
+          <a href="ask.html" data-dom-id="hero-ask" class="inline-flex items-center gap-2 rounded-lg bg-[var(--aif-primary)] px-5 py-3 text-sm font-semibold text-[var(--aif-primary-foreground)] shadow-sm hover:bg-[var(--aif-primary-600)]">
+            <i data-lucide="edit-3" class="h-4 w-4"></i>
+            去提问
+          </a>
+          <a href="explore.html" data-dom-id="hero-explore" class="inline-flex items-center gap-2 rounded-lg border border-[var(--aif-border)] bg-[var(--aif-background)] px-5 py-3 text-sm font-semibold text-[var(--aif-foreground)] hover:bg-[var(--aif-muted)]">
+            <i data-lucide="compass" class="h-4 w-4"></i>
+            浏览问题
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recommended questions -->
+    <section class="mt-10" aria-labelledby="recommend-title">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 id="recommend-title" class="text-xl font-bold text-[var(--aif-foreground)]">为你推荐</h2>
+        <a href="explore.html" class="text-sm font-medium text-[var(--aif-primary)] hover:text-[var(--aif-primary-700)]">查看更多</a>
+      </div>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+        <a href="detail.html" data-dom-id="card-question-1" class="card-hover group rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5">
+          <h3 class="text-lg font-semibold text-[var(--aif-foreground)] group-hover:text-[var(--aif-primary)]">如何向团队解释 AI 辅助编程的实际价值？</h3>
+          <p class="mt-2 line-clamp-2 text-sm text-[var(--aif-muted-foreground)]">
+            领导希望看到可量化的收益，但代码质量、开发体验这类收益很难用数字表达，有没有什么好的汇报思路？
+          </p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <span class="rounded-full bg-[var(--aif-primary-50)] px-2.5 py-0.5 text-xs font-medium text-[var(--aif-primary-700)]">AI 协作</span>
+            <span class="rounded-full bg-[var(--aif-muted)] px-2.5 py-0.5 text-xs font-medium text-[var(--aif-muted-foreground)]">团队管理</span>
+          </div>
+          <div class="mt-4 flex items-center gap-4 text-xs text-[var(--aif-muted-foreground)]">
+            <span class="inline-flex items-center gap-1"><i data-lucide="eye" class="h-3.5 w-3.5"></i> 1.2k 浏览</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="message-circle" class="h-3.5 w-3.5"></i> 34 回答</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="h-3.5 w-3.5"></i> 2 小时前</span>
+          </div>
+        </a>
+
+        <article class="card-hover rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5">
+          <h3 class="text-lg font-semibold text-[var(--aif-foreground)]">本地运行大语言模型，最低需要什么配置？</h3>
+          <p class="mt-2 line-clamp-2 text-sm text-[var(--aif-muted-foreground)]">
+            想在家里搭一个私有的问答助手，主要做文档检索和代码补全，显卡和内存应该怎么选？
+          </p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <span class="rounded-full bg-[var(--aif-primary-50)] px-2.5 py-0.5 text-xs font-medium text-[var(--aif-primary-700)]">LLM</span>
+            <span class="rounded-full bg-[var(--aif-muted)] px-2.5 py-0.5 text-xs font-medium text-[var(--aif-muted-foreground)]">硬件</span>
+          </div>
+          <div class="mt-4 flex items-center gap-4 text-xs text-[var(--aif-muted-foreground)]">
+            <span class="inline-flex items-center gap-1"><i data-lucide="eye" class="h-3.5 w-3.5"></i> 856 浏览</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="message-circle" class="h-3.5 w-3.5"></i> 21 回答</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="h-3.5 w-3.5"></i> 5 小时前</span>
+          </div>
+        </article>
+
+        <article class="card-hover rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5">
+          <h3 class="text-lg font-semibold text-[var(--aif-foreground)]">有哪些适合非技术人员的 AI 工具入门路径？</h3>
+          <p class="mt-2 line-clamp-2 text-sm text-[var(--aif-muted-foreground)]">
+            市场、运营同学想利用 AI 提升效率，但面对大量工具不知道从何学起，求推荐循序渐进的学习路线。
+          </p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <span class="rounded-full bg-[var(--state-success-bg)] px-2.5 py-0.5 text-xs font-medium text-[var(--state-success)]">入门</span>
+            <span class="rounded-full bg-[var(--aif-muted)] px-2.5 py-0.5 text-xs font-medium text-[var(--aif-muted-foreground)]">工具推荐</span>
+          </div>
+          <div class="mt-4 flex items-center gap-4 text-xs text-[var(--aif-muted-foreground)]">
+            <span class="inline-flex items-center gap-1"><i data-lucide="eye" class="h-3.5 w-3.5"></i> 623 浏览</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="message-circle" class="h-3.5 w-3.5"></i> 18 回答</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="h-3.5 w-3.5"></i> 昨天</span>
+          </div>
+        </article>
+
+        <article class="card-hover rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5">
+          <h3 class="text-lg font-semibold text-[var(--aif-foreground)]">AI 生成代码的安全性审查清单应该包含哪些项？</h3>
+          <p class="mt-2 line-clamp-2 text-sm text-[var(--aif-muted-foreground)]">
+            把 AI 生成的代码直接合入生产总觉得有风险，除了常规 CR，还应该重点检查哪些安全问题？
+          </p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <span class="rounded-full bg-[var(--aif-primary-50)] px-2.5 py-0.5 text-xs font-medium text-[var(--aif-primary-700)]">安全</span>
+            <span class="rounded-full bg-[var(--aif-muted)] px-2.5 py-0.5 text-xs font-medium text-[var(--aif-muted-foreground)]">代码审查</span>
+          </div>
+          <div class="mt-4 flex items-center gap-4 text-xs text-[var(--aif-muted-foreground)]">
+            <span class="inline-flex items-center gap-1"><i data-lucide="eye" class="h-3.5 w-3.5"></i> 412 浏览</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="message-circle" class="h-3.5 w-3.5"></i> 12 回答</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="h-3.5 w-3.5"></i> 2 天前</span>
+          </div>
+        </article>
+
+        <article class="card-hover rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 sm:col-span-2 lg:col-span-1">
+          <h3 class="text-lg font-semibold text-[var(--aif-foreground)]">怎样设计提示词才能让 AI 给出更有针对性的回答？</h3>
+          <p class="mt-2 line-clamp-2 text-sm text-[var(--aif-muted-foreground)]">
+            同样是向 AI 提问，有时候回答很泛，有时候却很精准。除了提供更多上下文，还有哪些技巧？
+          </p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <span class="rounded-full bg-[var(--state-success-bg)] px-2.5 py-0.5 text-xs font-medium text-[var(--state-success)]">Prompt</span>
+            <span class="rounded-full bg-[var(--aif-muted)] px-2.5 py-0.5 text-xs font-medium text-[var(--aif-muted-foreground)]">技巧</span>
+          </div>
+          <div class="mt-4 flex items-center gap-4 text-xs text-[var(--aif-muted-foreground)]">
+            <span class="inline-flex items-center gap-1"><i data-lucide="eye" class="h-3.5 w-3.5"></i> 1.5k 浏览</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="message-circle" class="h-3.5 w-3.5"></i> 56 回答</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="h-3.5 w-3.5"></i> 3 天前</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- AI features -->
+    <section class="mt-12" aria-labelledby="features-title">
+      <h2 id="features-title" class="mb-4 text-xl font-bold text-[var(--aif-foreground)]">AI 辅助亮点</h2>
+      <div class="grid gap-4 sm:grid-cols-3">
+        <div class="rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5">
+          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--aif-primary-50)] text-[var(--aif-primary)]">
+            <i data-lucide="sparkles" class="h-5 w-5"></i>
+          </div>
+          <h3 class="mt-4 font-semibold text-[var(--aif-foreground)]">AI 摘要</h3>
+          <p class="mt-1 text-sm text-[var(--aif-muted-foreground)]">自动提炼长篇讨论的核心观点，帮你快速抓住重点。</p>
+        </div>
+        <div class="rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5">
+          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--state-success-bg)] text-[var(--state-success)]">
+            <i data-lucide="pen-tool" class="h-5 w-5"></i>
+          </div>
+          <h3 class="mt-4 font-semibold text-[var(--aif-foreground)]">AI 帮我答</h3>
+          <p class="mt-1 text-sm text-[var(--aif-muted-foreground)]">基于问题内容生成回答草稿，再由你润色发布。</p>
+        </div>
+        <div class="rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5">
+          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--aif-primary-50)] text-[var(--aif-primary)]">
+            <i data-lucide="search" class="h-5 w-5"></i>
+          </div>
+          <h3 class="mt-4 font-semibold text-[var(--aif-foreground)]">语义搜索</h3>
+          <p class="mt-1 text-sm text-[var(--aif-muted-foreground)]">不只是关键词匹配，更能理解你的真实意图。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto w-full border-t border-[var(--aif-border)] bg-[var(--aif-card)] py-8">
+    <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-[var(--aif-muted-foreground)] sm:flex-row sm:px-6 lg:px-8">
+      <p>AI 辅助论坛 · 匿名问答社区</p>
+      <p>数据仅存储于本地，无后端 · 无账号</p>
+    </div>
+  </footer>
+
+  <script>lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==================== 字体（AI 论坛） ==================== */
+@font-face {
+  font-family: 'InstrumentSans';
+  src: url('/fonts/InstrumentSans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'InstrumentSans';
+  src: url('/fonts/InstrumentSans-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'GeistMono';
+  src: url('/fonts/GeistMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* ==================== 全局样式 ==================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'InstrumentSans', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ==================== AI 论坛通用样式 ==================== */
+.forum-root {
+  --font-aif-sans: 'InstrumentSans', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --font-aif-mono: 'GeistMono', 'SFMono-Regular', Consolas, monospace;
+  font-family: var(--font-aif-sans);
+  background-color: #f3f5fb;
+  color: #1c2333;
+  background-image:
+    radial-gradient(640px circle at 8% -4%, rgba(91,108,255,0.10), transparent 60%),
+    radial-gradient(720px circle at 100% 0%, rgba(20,181,133,0.08), transparent 55%),
+    radial-gradient(560px circle at 50% 120%, rgba(91,108,255,0.06), transparent 60%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+.forum-root .line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.forum-root .line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.forum-root .card-hover {
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.forum-root .card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(28,35,51,0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .forum-root .card-hover { transition: none; }
+  .forum-root .card-hover:hover { transform: none; box-shadow: none; }
+}
+
+/* 隐藏滚动条 */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

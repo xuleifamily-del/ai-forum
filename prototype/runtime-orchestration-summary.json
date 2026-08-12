@@ -1,0 +1,1298 @@
+{
+  "schemaVersion": "2026.07.22.00.00.00",
+  "skillProvenance": {
+    "name": "solo-design",
+    "version": "2026.07.22.00.00.00",
+    "release": "prompt-base-cloud-ssot-migration",
+    "version_source": "skill-release-manifest.json",
+    "read_status": "loaded"
+  },
+  "project": {
+    "operation": "create",
+    "resolvedLane": "complex_html_page",
+    "intentProfile": {
+      "caseFamily": "complex_html_page",
+      "deviceType": "desktop",
+      "language": "zh-CN"
+    },
+    "selectedIntentWorkflowRead": true,
+    "contextRequirementsLoaded": [
+      {
+        "path": "intent-workflows/intent-project-complex-build/INTENT_WORKFLOW.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "intent-workflows/intent-project-complex-build/00-requirement-and-style-intake.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "intent-workflows/intent-project-complex-build/02-page-composition.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "shared-runtime/agent-dispatch-runtime/shared-page-rendering-kernel.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "delivery-quality/page-rendering-quality-gate.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "delivery-quality/design-artifact-validation.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "delivery-quality/delivery-evidence-contract.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "visual-experience/visual-experience-guidelines.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "visual-experience/visual-checkpoint-protocol.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "shared-runtime/design-artifact-formats/design-project-file-format.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "shared-runtime/orchestration-summary-contract/orchestration-summary-contract.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      }
+    ],
+    "contextReadScope": "complex-html-page-create",
+    "readScopeLedger": [
+      {
+        "phase": "intake",
+        "files": [
+          "d:/Demo/ai-forum-arch-prd/ai-forum-arch-prd.html",
+          "d:/Demo/ai-forum-ia.md"
+        ],
+        "summary": "AI辅助论坛PRD与IA文档已解析：6个核心页面，匿名无账号，AI作为行为伴随层嵌入问答浏览检索。"
+      },
+      {
+        "actor": "page-sub-agent",
+        "lane": "complex_html_page",
+        "path": "intent-workflows/intent-project-complex-build/complex-page-runtime.md",
+        "reason": "page runtime guide",
+        "scopeClass": "page-runtime",
+        "declaredBeforeRead": true,
+        "recordedAt": "2026-08-11T08:06:21.069Z",
+        "nodeId": "page-index",
+        "htmlSrc": "pages/index.html"
+      },
+      {
+        "actor": "page-sub-agent",
+        "lane": "complex_html_page",
+        "path": "intent-workflows/intent-project-complex-build/complex-page-dispatch-contract.md",
+        "reason": "dispatch contract",
+        "scopeClass": "dispatch-contract",
+        "declaredBeforeRead": true,
+        "recordedAt": "2026-08-11T08:06:21.069Z",
+        "nodeId": "page-index",
+        "htmlSrc": "pages/index.html"
+      }
+    ],
+    "deviceType": "desktop",
+    "projectName": "AI 辅助论坛原型",
+    "designRead": "AI问答社区 / 大众开发者与浏览者 / 专业可信但低门槛 / 信息密集型 / 避免卡通或过度装饰",
+    "designDials": {
+      "layoutVariance": 3,
+      "motionIntensity": 2,
+      "visualDensity": 4
+    },
+    "styleDefinitionBrief": "专业清爽的AI问答社区：浅灰蓝底色、电蓝主色、翠绿辅助状态色、InstrumentSans无衬线标题、GeistMono等宽标签，卡片式信息密度高。",
+    "styleConstraints": {
+      "radiusMax": 16,
+      "staticShadowAlphaMax": 0.05,
+      "singleBrandHue": true
+    },
+    "cssPreflightEvidence": {
+      "ranAt": 1786434809000,
+      "command": "node apply-html-head-contract.mjs colors_and_type.css .preflight/preflight.html --title=Preflight --lang=zh-CN --prefix=aif",
+      "exitCode": 0,
+      "checks": {
+        "themeVarsId": true,
+        "semanticTokenFallbackId": true,
+        "themeInline": true,
+        "tailwindCdn": true,
+        "htmlClassLight": true
+      }
+    },
+    "generationTree": {
+      "path": "generation-tree.json",
+      "status": "planned",
+      "rootNodeId": "gen-project-shell"
+    },
+    "mobileNavigation": {
+      "applies": false
+    },
+    "sharedProjectShellContract": {
+      "navigationShell": "top-global-nav",
+      "background": "var(--aif-background) with subtle radial gradients",
+      "radiusScale": {
+        "sm": 4,
+        "md": 8,
+        "lg": 12,
+        "full": 9999
+      },
+      "surfaceDepthModel": "border/surface-led; static shadow alpha <= 0.05; deeper elevation only for floating layers",
+      "typographySystem": {
+        "title": "InstrumentSans, PingFang SC, Microsoft YaHei, Noto Sans SC, sans-serif",
+        "body": "InstrumentSans, PingFang SC, Microsoft YaHei, Noto Sans SC, sans-serif",
+        "mono": "GeistMono, SFMono-Regular, Consolas, monospace"
+      },
+      "shellSlots": [
+        "activeNavItem",
+        "pageTitle",
+        "pageMainContent"
+      ]
+    },
+    "dispatchPreflightManifest": [
+      {
+        "recorded_at": "2026-08-11T08:06:21.069Z",
+        "generatedBy": "build-page-dispatch-manifest.mjs",
+        "packetType": "ComplexPagePacket",
+        "laneContract": {
+          "resolvedLane": "complex_html_page",
+          "packetType": "ComplexPagePacket",
+          "pageRuntimeGuide": "intent-workflows/intent-project-complex-build/complex-page-runtime.md",
+          "dispatchContract": "intent-workflows/intent-project-complex-build/complex-page-dispatch-contract.md"
+        },
+        "taskLinePresent": true,
+        "outputPathPresent": true,
+        "sharedTemplate": "intent-workflows/intent-project-complex-build/complex-page-runtime.md",
+        "nodeId": "page-index",
+        "htmlSrc": "pages/index.html",
+        "supplementaryReads": [],
+        "allowedWritePaths": [
+          "pages/index.html",
+          "assets/"
+        ],
+        "forbiddenWriteRoots": [
+          "*.design",
+          "runtime-orchestration-summary.json",
+          "validation-report.json",
+          "finish-readiness-report.json",
+          "restore-contract-report.json",
+          "page-generation-summary.json"
+        ],
+        "toolPolicy": {
+          "todoWriteAllowed": false,
+          "validationScriptsAllowed": false,
+          "previewAllowed": false,
+          "helperScriptsAllowed": false,
+          "designFileWriteAllowed": false,
+          "allowedWritePaths": [
+            "pages/index.html",
+            "assets/"
+          ]
+        },
+        "skillRuntime": {
+          "skillDir": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design",
+          "deterministicToolDir": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling",
+          "toolPaths": {
+            "applyHtmlHeadContract": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\apply-html-head-contract.mjs",
+            "recordDispatchCompletion": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\record-dispatch-completion.mjs",
+            "buildPageDispatchManifest": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\build-page-dispatch-manifest.mjs",
+            "validateDesignWorkspace": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-design-workspace.mjs",
+            "validateFinishReadiness": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-finish-readiness.mjs",
+            "validateRestoreContract": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-restore-contract.mjs"
+          },
+          "requiredForPageSubAgent": [
+            "applyHtmlHeadContract",
+            "recordDispatchCompletion"
+          ],
+          "pathInjection": "absolute",
+          "pathContract": "Do not use {SKILL_DIR} placeholders inside Page Sub-Agent packets; use toolPaths.* absolute paths.",
+          "commandTemplates": {
+            "recordDispatchCompletion": "node \"c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\record-dispatch-completion.mjs\" \"d:\\Demo\\ai-forum-prototype\" --node-id=\"page-index\" --html-src=\"pages/index.html\" --status=completed --changed-files=<comma-separated-project-relative-files> --trace-digest=<main-agent-runtime-trace-digest> --tool-ledger-json=<tool-ledger-json-or-file>"
+          }
+        },
+        "cssFilePath": "d:\\Demo\\ai-forum-prototype\\colors_and_type.css",
+        "htmlFilePath": "d:\\Demo\\ai-forum-prototype\\pages\\index.html",
+        "brandPrefix": "aif",
+        "aestheticsMode": "free-explore",
+        "toolDisciplineBlockPresent": true,
+        "fillHtmlHeadCommand": "node \"c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\apply-html-head-contract.mjs\" \"d:\\Demo\\ai-forum-prototype\\colors_and_type.css\" \"d:\\Demo\\ai-forum-prototype\\pages\\index.html\" --title=\"首页（推荐流）\" --lang=\"zh-CN\" --prefix=\"aif\"",
+        "headFillMode": "skeleton-first",
+        "viewportMode": null,
+        "completionSchemaExpected": "full",
+        "restoreFields": null,
+        "restoreContractStatus": null,
+        "restoreCompactPacket": null,
+        "deterministicCommands": null,
+        "sourceAuthorityLock": null,
+        "preDispatchFileHashes": {
+          "ai-forum-prototype.design": "ca3d6f816524aaf6980f85b907d919ce5f54210fa3f89d0efa635ccc45a8ddd0"
+        },
+        "contextPreflight": {
+          "workflowPath": "intent-workflows/intent-project-complex-build/INTENT_WORKFLOW.md",
+          "requiredContextFiles": [
+            "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+            "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+            "shared-runtime/agent-dispatch-runtime/shared-page-rendering-kernel.md",
+            "delivery-quality/page-rendering-quality-gate.md",
+            "delivery-quality/design-artifact-validation.md",
+            "delivery-quality/delivery-evidence-contract.md",
+            "visual-experience/visual-experience-guidelines.md",
+            "visual-experience/visual-checkpoint-protocol.md"
+          ],
+          "optionalContextFiles": [],
+          "passed": true
+        },
+        "pageSliceOnly": true,
+        "requiredFieldsPresent": true,
+        "missingFields": [],
+        "fillHtmlHeadCommandValid": true,
+        "mobileNavigation": {
+          "required": false,
+          "appliesToThisPage": false,
+          "canonicalHtmlIncluded": false,
+          "missingFields": []
+        },
+        "persistedToSummary": true,
+        "taskQueryAudited": false,
+        "proofSource": "summary-only",
+        "largeWorkflowFilesInTaskQuery": null
+      },
+      {
+        "recorded_at": "2026-08-11T08:06:21.069Z",
+        "generatedBy": "build-page-dispatch-manifest.mjs",
+        "packetType": "ComplexPagePacket",
+        "laneContract": {
+          "resolvedLane": "complex_html_page",
+          "packetType": "ComplexPagePacket",
+          "pageRuntimeGuide": "intent-workflows/intent-project-complex-build/complex-page-runtime.md",
+          "dispatchContract": "intent-workflows/intent-project-complex-build/complex-page-dispatch-contract.md"
+        },
+        "taskLinePresent": true,
+        "outputPathPresent": true,
+        "sharedTemplate": "intent-workflows/intent-project-complex-build/complex-page-runtime.md",
+        "nodeId": "page-explore",
+        "htmlSrc": "pages/explore.html",
+        "supplementaryReads": [],
+        "allowedWritePaths": [
+          "pages/explore.html",
+          "assets/"
+        ],
+        "forbiddenWriteRoots": [
+          "*.design",
+          "runtime-orchestration-summary.json",
+          "validation-report.json",
+          "finish-readiness-report.json",
+          "restore-contract-report.json",
+          "page-generation-summary.json"
+        ],
+        "toolPolicy": {
+          "todoWriteAllowed": false,
+          "validationScriptsAllowed": false,
+          "previewAllowed": false,
+          "helperScriptsAllowed": false,
+          "designFileWriteAllowed": false,
+          "allowedWritePaths": [
+            "pages/explore.html",
+            "assets/"
+          ]
+        },
+        "skillRuntime": {
+          "skillDir": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design",
+          "deterministicToolDir": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling",
+          "toolPaths": {
+            "applyHtmlHeadContract": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\apply-html-head-contract.mjs",
+            "recordDispatchCompletion": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\record-dispatch-completion.mjs",
+            "buildPageDispatchManifest": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\build-page-dispatch-manifest.mjs",
+            "validateDesignWorkspace": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-design-workspace.mjs",
+            "validateFinishReadiness": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-finish-readiness.mjs",
+            "validateRestoreContract": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-restore-contract.mjs"
+          },
+          "requiredForPageSubAgent": [
+            "applyHtmlHeadContract",
+            "recordDispatchCompletion"
+          ],
+          "pathInjection": "absolute",
+          "pathContract": "Do not use {SKILL_DIR} placeholders inside Page Sub-Agent packets; use toolPaths.* absolute paths.",
+          "commandTemplates": {
+            "recordDispatchCompletion": "node \"c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\record-dispatch-completion.mjs\" \"d:\\Demo\\ai-forum-prototype\" --node-id=\"page-explore\" --html-src=\"pages/explore.html\" --status=completed --changed-files=<comma-separated-project-relative-files> --trace-digest=<main-agent-runtime-trace-digest> --tool-ledger-json=<tool-ledger-json-or-file>"
+          }
+        },
+        "cssFilePath": "d:\\Demo\\ai-forum-prototype\\colors_and_type.css",
+        "htmlFilePath": "d:\\Demo\\ai-forum-prototype\\pages\\explore.html",
+        "brandPrefix": "aif",
+        "aestheticsMode": "free-explore",
+        "toolDisciplineBlockPresent": true,
+        "fillHtmlHeadCommand": "node \"c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\apply-html-head-contract.mjs\" \"d:\\Demo\\ai-forum-prototype\\colors_and_type.css\" \"d:\\Demo\\ai-forum-prototype\\pages\\explore.html\" --title=\"问题广场\" --lang=\"zh-CN\" --prefix=\"aif\"",
+        "headFillMode": "skeleton-first",
+        "viewportMode": null,
+        "completionSchemaExpected": "full",
+        "restoreFields": null,
+        "restoreContractStatus": null,
+        "restoreCompactPacket": null,
+        "deterministicCommands": null,
+        "sourceAuthorityLock": null,
+        "preDispatchFileHashes": {
+          "ai-forum-prototype.design": "ca3d6f816524aaf6980f85b907d919ce5f54210fa3f89d0efa635ccc45a8ddd0"
+        },
+        "contextPreflight": {
+          "workflowPath": "intent-workflows/intent-project-complex-build/INTENT_WORKFLOW.md",
+          "requiredContextFiles": [
+            "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+            "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+            "shared-runtime/agent-dispatch-runtime/shared-page-rendering-kernel.md",
+            "delivery-quality/page-rendering-quality-gate.md",
+            "delivery-quality/design-artifact-validation.md",
+            "delivery-quality/delivery-evidence-contract.md",
+            "visual-experience/visual-experience-guidelines.md",
+            "visual-experience/visual-checkpoint-protocol.md"
+          ],
+          "optionalContextFiles": [],
+          "passed": true
+        },
+        "pageSliceOnly": true,
+        "requiredFieldsPresent": true,
+        "missingFields": [],
+        "fillHtmlHeadCommandValid": true,
+        "mobileNavigation": {
+          "required": false,
+          "appliesToThisPage": false,
+          "canonicalHtmlIncluded": false,
+          "missingFields": []
+        },
+        "persistedToSummary": true,
+        "taskQueryAudited": false,
+        "proofSource": "summary-only",
+        "largeWorkflowFilesInTaskQuery": null
+      },
+      {
+        "recorded_at": "2026-08-11T08:06:21.069Z",
+        "generatedBy": "build-page-dispatch-manifest.mjs",
+        "packetType": "ComplexPagePacket",
+        "laneContract": {
+          "resolvedLane": "complex_html_page",
+          "packetType": "ComplexPagePacket",
+          "pageRuntimeGuide": "intent-workflows/intent-project-complex-build/complex-page-runtime.md",
+          "dispatchContract": "intent-workflows/intent-project-complex-build/complex-page-dispatch-contract.md"
+        },
+        "taskLinePresent": true,
+        "outputPathPresent": true,
+        "sharedTemplate": "intent-workflows/intent-project-complex-build/complex-page-runtime.md",
+        "nodeId": "page-detail",
+        "htmlSrc": "pages/detail.html",
+        "supplementaryReads": [],
+        "allowedWritePaths": [
+          "pages/detail.html",
+          "assets/"
+        ],
+        "forbiddenWriteRoots": [
+          "*.design",
+          "runtime-orchestration-summary.json",
+          "validation-report.json",
+          "finish-readiness-report.json",
+          "restore-contract-report.json",
+          "page-generation-summary.json"
+        ],
+        "toolPolicy": {
+          "todoWriteAllowed": false,
+          "validationScriptsAllowed": false,
+          "previewAllowed": false,
+          "helperScriptsAllowed": false,
+          "designFileWriteAllowed": false,
+          "allowedWritePaths": [
+            "pages/detail.html",
+            "assets/"
+          ]
+        },
+        "skillRuntime": {
+          "skillDir": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design",
+          "deterministicToolDir": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling",
+          "toolPaths": {
+            "applyHtmlHeadContract": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\apply-html-head-contract.mjs",
+            "recordDispatchCompletion": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\record-dispatch-completion.mjs",
+            "buildPageDispatchManifest": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\build-page-dispatch-manifest.mjs",
+            "validateDesignWorkspace": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-design-workspace.mjs",
+            "validateFinishReadiness": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-finish-readiness.mjs",
+            "validateRestoreContract": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-restore-contract.mjs"
+          },
+          "requiredForPageSubAgent": [
+            "applyHtmlHeadContract",
+            "recordDispatchCompletion"
+          ],
+          "pathInjection": "absolute",
+          "pathContract": "Do not use {SKILL_DIR} placeholders inside Page Sub-Agent packets; use toolPaths.* absolute paths.",
+          "commandTemplates": {
+            "recordDispatchCompletion": "node \"c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\record-dispatch-completion.mjs\" \"d:\\Demo\\ai-forum-prototype\" --node-id=\"page-detail\" --html-src=\"pages/detail.html\" --status=completed --changed-files=<comma-separated-project-relative-files> --trace-digest=<main-agent-runtime-trace-digest> --tool-ledger-json=<tool-ledger-json-or-file>"
+          }
+        },
+        "cssFilePath": "d:\\Demo\\ai-forum-prototype\\colors_and_type.css",
+        "htmlFilePath": "d:\\Demo\\ai-forum-prototype\\pages\\detail.html",
+        "brandPrefix": "aif",
+        "aestheticsMode": "free-explore",
+        "toolDisciplineBlockPresent": true,
+        "fillHtmlHeadCommand": "node \"c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\apply-html-head-contract.mjs\" \"d:\\Demo\\ai-forum-prototype\\colors_and_type.css\" \"d:\\Demo\\ai-forum-prototype\\pages\\detail.html\" --title=\"问题详情页\" --lang=\"zh-CN\" --prefix=\"aif\"",
+        "headFillMode": "skeleton-first",
+        "viewportMode": null,
+        "completionSchemaExpected": "full",
+        "restoreFields": null,
+        "restoreContractStatus": null,
+        "restoreCompactPacket": null,
+        "deterministicCommands": null,
+        "sourceAuthorityLock": null,
+        "preDispatchFileHashes": {
+          "ai-forum-prototype.design": "ca3d6f816524aaf6980f85b907d919ce5f54210fa3f89d0efa635ccc45a8ddd0"
+        },
+        "contextPreflight": {
+          "workflowPath": "intent-workflows/intent-project-complex-build/INTENT_WORKFLOW.md",
+          "requiredContextFiles": [
+            "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+            "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+            "shared-runtime/agent-dispatch-runtime/shared-page-rendering-kernel.md",
+            "delivery-quality/page-rendering-quality-gate.md",
+            "delivery-quality/design-artifact-validation.md",
+            "delivery-quality/delivery-evidence-contract.md",
+            "visual-experience/visual-experience-guidelines.md",
+            "visual-experience/visual-checkpoint-protocol.md"
+          ],
+          "optionalContextFiles": [],
+          "passed": true
+        },
+        "pageSliceOnly": true,
+        "requiredFieldsPresent": true,
+        "missingFields": [],
+        "fillHtmlHeadCommandValid": true,
+        "mobileNavigation": {
+          "required": false,
+          "appliesToThisPage": false,
+          "canonicalHtmlIncluded": false,
+          "missingFields": []
+        },
+        "persistedToSummary": true,
+        "taskQueryAudited": false,
+        "proofSource": "summary-only",
+        "largeWorkflowFilesInTaskQuery": null
+      },
+      {
+        "recorded_at": "2026-08-11T08:06:21.069Z",
+        "generatedBy": "build-page-dispatch-manifest.mjs",
+        "packetType": "ComplexPagePacket",
+        "laneContract": {
+          "resolvedLane": "complex_html_page",
+          "packetType": "ComplexPagePacket",
+          "pageRuntimeGuide": "intent-workflows/intent-project-complex-build/complex-page-runtime.md",
+          "dispatchContract": "intent-workflows/intent-project-complex-build/complex-page-dispatch-contract.md"
+        },
+        "taskLinePresent": true,
+        "outputPathPresent": true,
+        "sharedTemplate": "intent-workflows/intent-project-complex-build/complex-page-runtime.md",
+        "nodeId": "page-ask",
+        "htmlSrc": "pages/ask.html",
+        "supplementaryReads": [],
+        "allowedWritePaths": [
+          "pages/ask.html",
+          "assets/"
+        ],
+        "forbiddenWriteRoots": [
+          "*.design",
+          "runtime-orchestration-summary.json",
+          "validation-report.json",
+          "finish-readiness-report.json",
+          "restore-contract-report.json",
+          "page-generation-summary.json"
+        ],
+        "toolPolicy": {
+          "todoWriteAllowed": false,
+          "validationScriptsAllowed": false,
+          "previewAllowed": false,
+          "helperScriptsAllowed": false,
+          "designFileWriteAllowed": false,
+          "allowedWritePaths": [
+            "pages/ask.html",
+            "assets/"
+          ]
+        },
+        "skillRuntime": {
+          "skillDir": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design",
+          "deterministicToolDir": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling",
+          "toolPaths": {
+            "applyHtmlHeadContract": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\apply-html-head-contract.mjs",
+            "recordDispatchCompletion": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\record-dispatch-completion.mjs",
+            "buildPageDispatchManifest": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\build-page-dispatch-manifest.mjs",
+            "validateDesignWorkspace": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-design-workspace.mjs",
+            "validateFinishReadiness": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-finish-readiness.mjs",
+            "validateRestoreContract": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-restore-contract.mjs"
+          },
+          "requiredForPageSubAgent": [
+            "applyHtmlHeadContract",
+            "recordDispatchCompletion"
+          ],
+          "pathInjection": "absolute",
+          "pathContract": "Do not use {SKILL_DIR} placeholders inside Page Sub-Agent packets; use toolPaths.* absolute paths.",
+          "commandTemplates": {
+            "recordDispatchCompletion": "node \"c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\record-dispatch-completion.mjs\" \"d:\\Demo\\ai-forum-prototype\" --node-id=\"page-ask\" --html-src=\"pages/ask.html\" --status=completed --changed-files=<comma-separated-project-relative-files> --trace-digest=<main-agent-runtime-trace-digest> --tool-ledger-json=<tool-ledger-json-or-file>"
+          }
+        },
+        "cssFilePath": "d:\\Demo\\ai-forum-prototype\\colors_and_type.css",
+        "htmlFilePath": "d:\\Demo\\ai-forum-prototype\\pages\\ask.html",
+        "brandPrefix": "aif",
+        "aestheticsMode": "free-explore",
+        "toolDisciplineBlockPresent": true,
+        "fillHtmlHeadCommand": "node \"c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\apply-html-head-contract.mjs\" \"d:\\Demo\\ai-forum-prototype\\colors_and_type.css\" \"d:\\Demo\\ai-forum-prototype\\pages\\ask.html\" --title=\"发布提问页\" --lang=\"zh-CN\" --prefix=\"aif\"",
+        "headFillMode": "skeleton-first",
+        "viewportMode": null,
+        "completionSchemaExpected": "full",
+        "restoreFields": null,
+        "restoreContractStatus": null,
+        "restoreCompactPacket": null,
+        "deterministicCommands": null,
+        "sourceAuthorityLock": null,
+        "preDispatchFileHashes": {
+          "ai-forum-prototype.design": "ca3d6f816524aaf6980f85b907d919ce5f54210fa3f89d0efa635ccc45a8ddd0"
+        },
+        "contextPreflight": {
+          "workflowPath": "intent-workflows/intent-project-complex-build/INTENT_WORKFLOW.md",
+          "requiredContextFiles": [
+            "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+            "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+            "shared-runtime/agent-dispatch-runtime/shared-page-rendering-kernel.md",
+            "delivery-quality/page-rendering-quality-gate.md",
+            "delivery-quality/design-artifact-validation.md",
+            "delivery-quality/delivery-evidence-contract.md",
+            "visual-experience/visual-experience-guidelines.md",
+            "visual-experience/visual-checkpoint-protocol.md"
+          ],
+          "optionalContextFiles": [],
+          "passed": true
+        },
+        "pageSliceOnly": true,
+        "requiredFieldsPresent": true,
+        "missingFields": [],
+        "fillHtmlHeadCommandValid": true,
+        "mobileNavigation": {
+          "required": false,
+          "appliesToThisPage": false,
+          "canonicalHtmlIncluded": false,
+          "missingFields": []
+        },
+        "persistedToSummary": true,
+        "taskQueryAudited": false,
+        "proofSource": "summary-only",
+        "largeWorkflowFilesInTaskQuery": null
+      },
+      {
+        "recorded_at": "2026-08-11T08:06:21.069Z",
+        "generatedBy": "build-page-dispatch-manifest.mjs",
+        "packetType": "ComplexPagePacket",
+        "laneContract": {
+          "resolvedLane": "complex_html_page",
+          "packetType": "ComplexPagePacket",
+          "pageRuntimeGuide": "intent-workflows/intent-project-complex-build/complex-page-runtime.md",
+          "dispatchContract": "intent-workflows/intent-project-complex-build/complex-page-dispatch-contract.md"
+        },
+        "taskLinePresent": true,
+        "outputPathPresent": true,
+        "sharedTemplate": "intent-workflows/intent-project-complex-build/complex-page-runtime.md",
+        "nodeId": "page-search",
+        "htmlSrc": "pages/search.html",
+        "supplementaryReads": [],
+        "allowedWritePaths": [
+          "pages/search.html",
+          "assets/"
+        ],
+        "forbiddenWriteRoots": [
+          "*.design",
+          "runtime-orchestration-summary.json",
+          "validation-report.json",
+          "finish-readiness-report.json",
+          "restore-contract-report.json",
+          "page-generation-summary.json"
+        ],
+        "toolPolicy": {
+          "todoWriteAllowed": false,
+          "validationScriptsAllowed": false,
+          "previewAllowed": false,
+          "helperScriptsAllowed": false,
+          "designFileWriteAllowed": false,
+          "allowedWritePaths": [
+            "pages/search.html",
+            "assets/"
+          ]
+        },
+        "skillRuntime": {
+          "skillDir": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design",
+          "deterministicToolDir": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling",
+          "toolPaths": {
+            "applyHtmlHeadContract": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\apply-html-head-contract.mjs",
+            "recordDispatchCompletion": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\record-dispatch-completion.mjs",
+            "buildPageDispatchManifest": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\build-page-dispatch-manifest.mjs",
+            "validateDesignWorkspace": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-design-workspace.mjs",
+            "validateFinishReadiness": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-finish-readiness.mjs",
+            "validateRestoreContract": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-restore-contract.mjs"
+          },
+          "requiredForPageSubAgent": [
+            "applyHtmlHeadContract",
+            "recordDispatchCompletion"
+          ],
+          "pathInjection": "absolute",
+          "pathContract": "Do not use {SKILL_DIR} placeholders inside Page Sub-Agent packets; use toolPaths.* absolute paths.",
+          "commandTemplates": {
+            "recordDispatchCompletion": "node \"c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\record-dispatch-completion.mjs\" \"d:\\Demo\\ai-forum-prototype\" --node-id=\"page-search\" --html-src=\"pages/search.html\" --status=completed --changed-files=<comma-separated-project-relative-files> --trace-digest=<main-agent-runtime-trace-digest> --tool-ledger-json=<tool-ledger-json-or-file>"
+          }
+        },
+        "cssFilePath": "d:\\Demo\\ai-forum-prototype\\colors_and_type.css",
+        "htmlFilePath": "d:\\Demo\\ai-forum-prototype\\pages\\search.html",
+        "brandPrefix": "aif",
+        "aestheticsMode": "free-explore",
+        "toolDisciplineBlockPresent": true,
+        "fillHtmlHeadCommand": "node \"c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\apply-html-head-contract.mjs\" \"d:\\Demo\\ai-forum-prototype\\colors_and_type.css\" \"d:\\Demo\\ai-forum-prototype\\pages\\search.html\" --title=\"搜索结果页\" --lang=\"zh-CN\" --prefix=\"aif\"",
+        "headFillMode": "skeleton-first",
+        "viewportMode": null,
+        "completionSchemaExpected": "full",
+        "restoreFields": null,
+        "restoreContractStatus": null,
+        "restoreCompactPacket": null,
+        "deterministicCommands": null,
+        "sourceAuthorityLock": null,
+        "preDispatchFileHashes": {
+          "ai-forum-prototype.design": "ca3d6f816524aaf6980f85b907d919ce5f54210fa3f89d0efa635ccc45a8ddd0"
+        },
+        "contextPreflight": {
+          "workflowPath": "intent-workflows/intent-project-complex-build/INTENT_WORKFLOW.md",
+          "requiredContextFiles": [
+            "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+            "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+            "shared-runtime/agent-dispatch-runtime/shared-page-rendering-kernel.md",
+            "delivery-quality/page-rendering-quality-gate.md",
+            "delivery-quality/design-artifact-validation.md",
+            "delivery-quality/delivery-evidence-contract.md",
+            "visual-experience/visual-experience-guidelines.md",
+            "visual-experience/visual-checkpoint-protocol.md"
+          ],
+          "optionalContextFiles": [],
+          "passed": true
+        },
+        "pageSliceOnly": true,
+        "requiredFieldsPresent": true,
+        "missingFields": [],
+        "fillHtmlHeadCommandValid": true,
+        "mobileNavigation": {
+          "required": false,
+          "appliesToThisPage": false,
+          "canonicalHtmlIncluded": false,
+          "missingFields": []
+        },
+        "persistedToSummary": true,
+        "taskQueryAudited": false,
+        "proofSource": "summary-only",
+        "largeWorkflowFilesInTaskQuery": null
+      },
+      {
+        "recorded_at": "2026-08-11T08:06:21.069Z",
+        "generatedBy": "build-page-dispatch-manifest.mjs",
+        "packetType": "ComplexPagePacket",
+        "laneContract": {
+          "resolvedLane": "complex_html_page",
+          "packetType": "ComplexPagePacket",
+          "pageRuntimeGuide": "intent-workflows/intent-project-complex-build/complex-page-runtime.md",
+          "dispatchContract": "intent-workflows/intent-project-complex-build/complex-page-dispatch-contract.md"
+        },
+        "taskLinePresent": true,
+        "outputPathPresent": true,
+        "sharedTemplate": "intent-workflows/intent-project-complex-build/complex-page-runtime.md",
+        "nodeId": "page-dashboard",
+        "htmlSrc": "pages/dashboard.html",
+        "supplementaryReads": [],
+        "allowedWritePaths": [
+          "pages/dashboard.html",
+          "assets/"
+        ],
+        "forbiddenWriteRoots": [
+          "*.design",
+          "runtime-orchestration-summary.json",
+          "validation-report.json",
+          "finish-readiness-report.json",
+          "restore-contract-report.json",
+          "page-generation-summary.json"
+        ],
+        "toolPolicy": {
+          "todoWriteAllowed": false,
+          "validationScriptsAllowed": false,
+          "previewAllowed": false,
+          "helperScriptsAllowed": false,
+          "designFileWriteAllowed": false,
+          "allowedWritePaths": [
+            "pages/dashboard.html",
+            "assets/"
+          ]
+        },
+        "skillRuntime": {
+          "skillDir": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design",
+          "deterministicToolDir": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling",
+          "toolPaths": {
+            "applyHtmlHeadContract": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\apply-html-head-contract.mjs",
+            "recordDispatchCompletion": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\record-dispatch-completion.mjs",
+            "buildPageDispatchManifest": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\build-page-dispatch-manifest.mjs",
+            "validateDesignWorkspace": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-design-workspace.mjs",
+            "validateFinishReadiness": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-finish-readiness.mjs",
+            "validateRestoreContract": "c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-restore-contract.mjs"
+          },
+          "requiredForPageSubAgent": [
+            "applyHtmlHeadContract",
+            "recordDispatchCompletion"
+          ],
+          "pathInjection": "absolute",
+          "pathContract": "Do not use {SKILL_DIR} placeholders inside Page Sub-Agent packets; use toolPaths.* absolute paths.",
+          "commandTemplates": {
+            "recordDispatchCompletion": "node \"c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\record-dispatch-completion.mjs\" \"d:\\Demo\\ai-forum-prototype\" --node-id=\"page-dashboard\" --html-src=\"pages/dashboard.html\" --status=completed --changed-files=<comma-separated-project-relative-files> --trace-digest=<main-agent-runtime-trace-digest> --tool-ledger-json=<tool-ledger-json-or-file>"
+          }
+        },
+        "cssFilePath": "d:\\Demo\\ai-forum-prototype\\colors_and_type.css",
+        "htmlFilePath": "d:\\Demo\\ai-forum-prototype\\pages\\dashboard.html",
+        "brandPrefix": "aif",
+        "aestheticsMode": "free-explore",
+        "toolDisciplineBlockPresent": true,
+        "fillHtmlHeadCommand": "node \"c:\\Users\\stanl\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\apply-html-head-contract.mjs\" \"d:\\Demo\\ai-forum-prototype\\colors_and_type.css\" \"d:\\Demo\\ai-forum-prototype\\pages\\dashboard.html\" --title=\"数据看板页\" --lang=\"zh-CN\" --prefix=\"aif\" --charts",
+        "headFillMode": "skeleton-first",
+        "viewportMode": null,
+        "completionSchemaExpected": "full",
+        "restoreFields": null,
+        "restoreContractStatus": null,
+        "restoreCompactPacket": null,
+        "deterministicCommands": null,
+        "sourceAuthorityLock": null,
+        "preDispatchFileHashes": {
+          "ai-forum-prototype.design": "ca3d6f816524aaf6980f85b907d919ce5f54210fa3f89d0efa635ccc45a8ddd0"
+        },
+        "contextPreflight": {
+          "workflowPath": "intent-workflows/intent-project-complex-build/INTENT_WORKFLOW.md",
+          "requiredContextFiles": [
+            "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+            "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+            "shared-runtime/agent-dispatch-runtime/shared-page-rendering-kernel.md",
+            "delivery-quality/page-rendering-quality-gate.md",
+            "delivery-quality/design-artifact-validation.md",
+            "delivery-quality/delivery-evidence-contract.md",
+            "visual-experience/visual-experience-guidelines.md",
+            "visual-experience/visual-checkpoint-protocol.md"
+          ],
+          "optionalContextFiles": [],
+          "passed": true
+        },
+        "pageSliceOnly": true,
+        "requiredFieldsPresent": true,
+        "missingFields": [],
+        "fillHtmlHeadCommandValid": true,
+        "mobileNavigation": {
+          "required": false,
+          "appliesToThisPage": false,
+          "canonicalHtmlIncluded": false,
+          "missingFields": []
+        },
+        "persistedToSummary": true,
+        "taskQueryAudited": false,
+        "proofSource": "summary-only",
+        "largeWorkflowFilesInTaskQuery": null
+      }
+    ],
+    "validationRunDiscipline": {
+      "maxFullValidationRuns": 2,
+      "softWarningsTriggerRepair": false,
+      "blockingRepairMode": "targeted-once",
+      "forbiddenRepairTriggers": [
+        "soft-warning-only",
+        "provenance-warning-only",
+        "style-warning-only"
+      ]
+    },
+    "validationHistory": [],
+    "validationRepairLedger": [],
+    "validationSnapshot": {},
+    "artifactReadinessEvidence": {},
+    "lowValueCallWatchdog": {
+      "applies": true,
+      "noProgressNextAction": "proceed-to-next-dispatch-or-validation"
+    },
+    "sourceAuthorityLock": null,
+    "visualQualityCheckpoints": [
+      {
+        "checkpointId": "vq-anchor",
+        "dimension": "visual-anchor",
+        "expected": "电蓝主色导航栏+全局搜索框作为每页视觉锚点，AI摘要卡片使用左侧边线高亮",
+        "evidenceTarget": "partials/project-shell.html#global-nav"
+      },
+      {
+        "checkpointId": "vq-hierarchy",
+        "dimension": "information-hierarchy",
+        "expected": "问题标题>H2，摘要与回答分区清晰，CTA按钮与元信息层级分明",
+        "evidenceTarget": "pages/detail.html#content"
+      },
+      {
+        "checkpointId": "vq-structure",
+        "dimension": "composition-structure",
+        "expected": "最大宽度容器居中，卡片列表统一间距，侧边元素不挤压主内容",
+        "evidenceTarget": "pages/index.html#layout"
+      },
+      {
+        "checkpointId": "vq-implementation",
+        "dimension": "implementation-strategy",
+        "expected": "共享partials/project-shell.html头部，各页继承并填充pageMainContent插槽，使用Tailwind语义类+CSS变量",
+        "evidenceTarget": "generation-tree.json"
+      }
+    ],
+    "expectedDispatches": [
+      {
+        "nodeId": "page-index",
+        "pageId": "page-index",
+        "targetPageId": "page-index",
+        "htmlSrc": "pages/index.html",
+        "packetType": "ComplexPagePacket",
+        "status": "completed",
+        "changedFiles": [
+          "pages/index.html"
+        ],
+        "toolCallLedger": {
+          "source": "main-agent-runtime-trace",
+          "traceDigest": "7e1b6c8f4e9d2a5b3c0d8e7f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+          "todoWriteCalls": 0,
+          "previewCalls": 0,
+          "validationScriptCalls": 0,
+          "helperScriptWrites": 0
+        },
+        "recordedAt": "2026-08-11T08:22:03.431Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "nodeId": "page-explore",
+        "pageId": "page-explore",
+        "targetPageId": "page-explore",
+        "htmlSrc": "pages/explore.html",
+        "packetType": "ComplexPagePacket",
+        "status": "completed",
+        "changedFiles": [
+          "pages/explore.html"
+        ],
+        "toolCallLedger": {
+          "source": "main-agent-runtime-trace",
+          "traceDigest": "2732ba0b0e4e5d7e7b88096da6e3fb7d56d88747ad75180fd719aafd2b06f33f",
+          "todoWriteCalls": 0,
+          "previewCalls": 0,
+          "validationScriptCalls": 0,
+          "helperScriptWrites": 0
+        },
+        "recordedAt": "2026-08-11T08:20:45.590Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "nodeId": "page-detail",
+        "pageId": "page-detail",
+        "targetPageId": "page-detail",
+        "htmlSrc": "pages/detail.html",
+        "packetType": "ComplexPagePacket",
+        "status": "completed",
+        "changedFiles": [
+          "pages/detail.html"
+        ],
+        "toolCallLedger": {
+          "source": "main-agent-runtime-trace",
+          "traceDigest": "6f911b6b89592f7ac9502c7ae4503eca4650631a931d6d86b8f3d037e2f76886",
+          "todoWriteCalls": 0,
+          "previewCalls": 0,
+          "validationScriptCalls": 0,
+          "helperScriptWrites": 0
+        },
+        "recordedAt": "2026-08-11T08:20:45.677Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "nodeId": "page-ask",
+        "pageId": "page-ask",
+        "targetPageId": "page-ask",
+        "htmlSrc": "pages/ask.html",
+        "packetType": "ComplexPagePacket",
+        "status": "completed",
+        "changedFiles": [
+          "pages/ask.html"
+        ],
+        "toolCallLedger": {
+          "source": "main-agent-runtime-trace",
+          "traceDigest": "f561ba102a7ef0a747760135495265645e298eca64b44f945d4909524056ed4b",
+          "todoWriteCalls": 0,
+          "previewCalls": 0,
+          "validationScriptCalls": 0,
+          "helperScriptWrites": 0
+        },
+        "recordedAt": "2026-08-11T08:20:45.765Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "nodeId": "page-search",
+        "pageId": "page-search",
+        "targetPageId": "page-search",
+        "htmlSrc": "pages/search.html",
+        "packetType": "ComplexPagePacket",
+        "status": "completed",
+        "changedFiles": [
+          "pages/search.html"
+        ],
+        "toolCallLedger": {
+          "source": "main-agent-runtime-trace",
+          "traceDigest": "47bbfaa9e108c40f129ec052cac8faf16642b2650d968149b9e57f23bacc6a83",
+          "todoWriteCalls": 0,
+          "previewCalls": 0,
+          "validationScriptCalls": 0,
+          "helperScriptWrites": 0
+        },
+        "recordedAt": "2026-08-11T08:20:45.851Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "nodeId": "page-dashboard",
+        "pageId": "page-dashboard",
+        "targetPageId": "page-dashboard",
+        "htmlSrc": "pages/dashboard.html",
+        "packetType": "ComplexPagePacket",
+        "status": "completed",
+        "changedFiles": [
+          "pages/dashboard.html"
+        ],
+        "toolCallLedger": {
+          "source": "main-agent-runtime-trace",
+          "traceDigest": "d41f518c44ba63290e73c8a820e06c9c9a83534e08c4f9e761c45d1929570614",
+          "todoWriteCalls": 0,
+          "previewCalls": 0,
+          "validationScriptCalls": 0,
+          "helperScriptWrites": 0
+        },
+        "recordedAt": "2026-08-11T08:20:45.951Z",
+        "source": "record-dispatch-completion.mjs"
+      }
+    ],
+    "mainAgentPostDispatchMutations": [
+      {
+        "path": "ai-forum-prototype.design",
+        "reason": "registered page nodes and interactions after sub-agent generation",
+        "owner": "main-agent",
+        "recordedAt": "2026-08-11T08:22:03.431Z",
+        "source": "record-dispatch-completion.mjs"
+      }
+    ]
+  },
+  "designSource": {
+    "operatingMode": "free-explore",
+    "cssFilePath": "colors_and_type.css",
+    "brandPrefix": "aif",
+    "libraryIdentity": null
+  },
+  "pages": [
+    {
+      "nodeId": "page-index",
+      "title": "首页（推荐流）",
+      "htmlSrc": "pages/index.html",
+      "pageIndex": 1,
+      "type": "showcase",
+      "visualNorthStar": "落地页：顶部导航+全局搜索+为你推荐问题流+发帖CTA+匿名身份卡，信息密度中高但留白充足。",
+      "compositionPattern": "单列内容流，卡片列表，顶部固定搜索与导航。",
+      "continuityAnchors": [
+        "共享顶部全局导航，首页/广场/看板三个常驻入口",
+        "共享全局搜索框与匿名身份渐变色头像组件",
+        "电蓝主按钮用于发帖与主要CTA，翠绿用于成功/AI状态，橙黄用于警告/待更新"
+      ],
+      "componentPlan": [
+        "top-nav",
+        "search-bar",
+        "question-card",
+        "ask-button",
+        "identity-card"
+      ],
+      "imagePlan": [],
+      "chartsRequired": false,
+      "requirementIds": [
+        "REQ-CONTENT-001",
+        "REQ-FEATURE-001",
+        "REQ-FEATURE-002"
+      ]
+    },
+    {
+      "nodeId": "page-explore",
+      "title": "问题广场",
+      "htmlSrc": "pages/explore.html",
+      "pageIndex": 2,
+      "type": "info-dense",
+      "visualNorthStar": "全站问题列表：顶部导航+排序切换（最新/热度）+问题列表+发帖入口。",
+      "compositionPattern": "单列列表，顶部排序标签栏，卡片式问题项。",
+      "continuityAnchors": [
+        "共享顶部全局导航，首页/广场/看板三个常驻入口",
+        "共享全局搜索框与发帖按钮",
+        "问题卡片组件与首页推荐流一致"
+      ],
+      "componentPlan": [
+        "top-nav",
+        "search-bar",
+        "sort-tabs",
+        "question-list",
+        "ask-button"
+      ],
+      "imagePlan": [],
+      "chartsRequired": false,
+      "requirementIds": [
+        "REQ-FEATURE-003"
+      ]
+    },
+    {
+      "nodeId": "page-detail",
+      "title": "问题详情页",
+      "htmlSrc": "pages/detail.html",
+      "pageIndex": 3,
+      "type": "info-dense",
+      "visualNorthStar": "问题正文+AI摘要+回答列表+AI帮我答+内联编辑器，来源引用可点击。",
+      "compositionPattern": "两栏或单列：问题区置顶，摘要卡片突出，回答列表随后，编辑器在底部。",
+      "continuityAnchors": [
+        "共享顶部全局导航与搜索框",
+        "AI摘要卡片使用电蓝左侧边线与引用标记",
+        "AI回答置顶并带'AI初始回答'标签与来源引用"
+      ],
+      "componentPlan": [
+        "top-nav",
+        "search-bar",
+        "question-body",
+        "ai-summary",
+        "answer-card",
+        "ai-assist-panel",
+        "inline-editor"
+      ],
+      "imagePlan": [],
+      "chartsRequired": false,
+      "requirementIds": [
+        "REQ-FEATURE-004",
+        "REQ-FEATURE-005",
+        "REQ-FEATURE-006"
+      ]
+    },
+    {
+      "nodeId": "page-ask",
+      "title": "发布提问页",
+      "htmlSrc": "pages/ask.html",
+      "pageIndex": 4,
+      "type": "task-driven",
+      "visualNorthStar": "标题输入+正文编辑器+AI工具栏（润色/扩写/生成草稿）+标签输入+发布按钮。",
+      "compositionPattern": "居中窄容器表单，AI工具栏悬浮或固定在编辑器上方，相似问题提示为卡片行。",
+      "continuityAnchors": [
+        "共享顶部全局导航与搜索框",
+        "编辑器使用浅色边框卡片，AI工具按钮使用电蓝描边",
+        "发布按钮使用电蓝实心，取消返回首页"
+      ],
+      "componentPlan": [
+        "top-nav",
+        "search-bar",
+        "title-input",
+        "body-editor",
+        "ai-toolbar",
+        "tag-input",
+        "similar-questions"
+      ],
+      "imagePlan": [],
+      "chartsRequired": false,
+      "requirementIds": [
+        "REQ-FEATURE-007",
+        "REQ-FEATURE-008",
+        "REQ-FEATURE-009"
+      ]
+    },
+    {
+      "nodeId": "page-search",
+      "title": "搜索结果页",
+      "htmlSrc": "pages/search.html",
+      "pageIndex": 5,
+      "type": "info-dense",
+      "visualNorthStar": "搜索框+AI要点摘要（带引用）+相关帖卡片列表。",
+      "compositionPattern": "顶部搜索框，摘要卡片突出显示，下方为相关结果卡片网格或列表。",
+      "continuityAnchors": [
+        "共享顶部全局导航",
+        "摘要引用标记可点击跳转源回答",
+        "结果卡片与首页问题卡片视觉一致"
+      ],
+      "componentPlan": [
+        "top-nav",
+        "search-bar",
+        "ai-summary-result",
+        "question-card"
+      ],
+      "imagePlan": [],
+      "chartsRequired": false,
+      "requirementIds": [
+        "REQ-FEATURE-010"
+      ]
+    },
+    {
+      "nodeId": "page-dashboard",
+      "title": "数据看板页",
+      "htmlSrc": "pages/dashboard.html",
+      "pageIndex": 6,
+      "type": "info-dense",
+      "visualNorthStar": "AI使用率卡片+功能触发分布+反馈有用率+匿名身份卡+清空本地数据。",
+      "compositionPattern": "指标卡片网格+迷你图表+身份管理卡片+危险操作区。",
+      "continuityAnchors": [
+        "共享顶部全局导航，首页/广场/看板三个常驻入口",
+        "匿名身份卡与首页一致",
+        "清空数据使用危险红色描边按钮并需二次确认"
+      ],
+      "componentPlan": [
+        "top-nav",
+        "metric-card",
+        "mini-chart",
+        "identity-card",
+        "danger-action"
+      ],
+      "imagePlan": [],
+      "chartsRequired": true,
+      "requirementIds": [
+        "REQ-FEATURE-011",
+        "REQ-FEATURE-012"
+      ]
+    }
+  ],
+  "assets": [],
+  "wiringPlan": [
+    {
+      "from": "page-index",
+      "to": "page-explore",
+      "domId": "nav-explore",
+      "label": "导航到问题广场",
+      "hideEdge": false
+    },
+    {
+      "from": "page-index",
+      "to": "page-dashboard",
+      "domId": "nav-dashboard",
+      "label": "导航到数据看板",
+      "hideEdge": false
+    },
+    {
+      "from": "page-index",
+      "to": "page-ask",
+      "domId": "btn-ask",
+      "label": "发布提问",
+      "hideEdge": true
+    },
+    {
+      "from": "page-index",
+      "to": "page-search",
+      "domId": "search-submit",
+      "label": "搜索提交",
+      "hideEdge": true
+    },
+    {
+      "from": "page-index",
+      "to": "page-detail",
+      "domId": "card-question-1",
+      "label": "点击推荐问题",
+      "hideEdge": true
+    },
+    {
+      "from": "page-explore",
+      "to": "page-index",
+      "domId": "nav-home",
+      "label": "返回首页",
+      "hideEdge": false
+    },
+    {
+      "from": "page-explore",
+      "to": "page-dashboard",
+      "domId": "nav-dashboard",
+      "label": "导航到数据看板",
+      "hideEdge": false
+    },
+    {
+      "from": "page-explore",
+      "to": "page-ask",
+      "domId": "btn-ask",
+      "label": "发布提问",
+      "hideEdge": true
+    },
+    {
+      "from": "page-explore",
+      "to": "page-detail",
+      "domId": "card-question-1",
+      "label": "点击问题",
+      "hideEdge": true
+    },
+    {
+      "from": "page-detail",
+      "to": "page-ask",
+      "domId": "btn-ask-top",
+      "label": "顶部提问",
+      "hideEdge": true
+    },
+    {
+      "from": "page-detail",
+      "to": "page-search",
+      "domId": "search-submit",
+      "label": "搜索提交",
+      "hideEdge": true
+    },
+    {
+      "from": "page-detail",
+      "to": "page-index",
+      "domId": "btn-back",
+      "label": "返回首页",
+      "hideEdge": true
+    },
+    {
+      "from": "page-ask",
+      "to": "page-detail",
+      "domId": "btn-publish",
+      "label": "发布成功",
+      "hideEdge": false
+    },
+    {
+      "from": "page-ask",
+      "to": "page-index",
+      "domId": "btn-cancel",
+      "label": "取消",
+      "hideEdge": true
+    },
+    {
+      "from": "page-search",
+      "to": "page-detail",
+      "domId": "card-result-1",
+      "label": "点击结果",
+      "hideEdge": true
+    },
+    {
+      "from": "page-search",
+      "to": "page-index",
+      "domId": "btn-back",
+      "label": "返回首页",
+      "hideEdge": true
+    },
+    {
+      "from": "page-dashboard",
+      "to": "page-index",
+      "domId": "btn-back",
+      "label": "返回首页",
+      "hideEdge": true
+    }
+  ],
+  "hiddenInteractionPlan": []
+}

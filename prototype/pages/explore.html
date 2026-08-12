@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问题广场</title>
+    <style id="theme-vars">
+/* AI 辅助论坛原型 · 品牌颜色与字体系统 */
+
+@font-face {
+  font-family: 'InstrumentSans';
+  src: url('assets/fonts/InstrumentSans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'InstrumentSans';
+  src: url('assets/fonts/InstrumentSans-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'GeistMono';
+  src: url('assets/fonts/GeistMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  /* Primary scale — derived from #5b6cff */
+  --aif-primary-50: #eef0ff;
+  --aif-primary-100: #d8dcff;
+  --aif-primary-200: #b6bdff;
+  --aif-primary-300: #8e95ff;
+  --aif-primary-400: #6c78ff;
+  --aif-primary-500: #5b6cff;
+  --aif-primary-600: #4a59e6;
+  --aif-primary-700: #3d49be;
+  --aif-primary-800: #333e9a;
+  --aif-primary-900: #2d3779;
+
+  /* Neutral scale — derived from #1c2333 */
+  --aif-neutral-50: #f6f7f9;
+  --aif-neutral-100: #eceef2;
+  --aif-neutral-200: #e4e8f1;
+  --aif-neutral-300: #cbd2e0;
+  --aif-neutral-400: #9ba4b8;
+  --aif-neutral-500: #697386;
+  --aif-neutral-600: #4b5366;
+  --aif-neutral-700: #353b4d;
+  --aif-neutral-800: #1c2333;
+  --aif-neutral-900: #111623;
+
+  /* Semantic aliases */
+  --aif-background: #f3f5fb;
+  --aif-foreground: #1c2333;
+  --aif-card: #ffffff;
+  --aif-card-foreground: #1c2333;
+  --aif-popover: #ffffff;
+  --aif-popover-foreground: #1c2333;
+  --aif-primary: #5b6cff;
+  --aif-primary-foreground: #ffffff;
+  --aif-muted: #f6f7f9;
+  --aif-muted-foreground: #697386;
+  --aif-border: #e4e8f1;
+  --aif-input: #e4e8f1;
+  --aif-ring: #5b6cff;
+
+  /* Radius */
+  --aif-radius-small: 4px;
+  --aif-radius-medium: 8px;
+  --aif-radius-large: 12px;
+
+  /* State colors */
+  --state-success: #14b585;
+  --state-success-bg: rgba(20, 181, 133, 0.10);
+  --state-warning: #e0822e;
+  --state-warning-bg: rgba(224, 130, 46, 0.10);
+  --state-error: #ef4444;
+  --state-error-bg: rgba(239, 68, 68, 0.10);
+  --state-info: #5b6cff;
+  --state-info-bg: rgba(91, 108, 255, 0.10);
+
+  /* Typography */
+  --aif-font-title: 'InstrumentSans', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --aif-font-body: 'InstrumentSans', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --aif-font-mono: 'GeistMono', 'SFMono-Regular', Consolas, monospace;
+
+  /* Legacy aliases for direct use */
+  --bg: #f3f5fb;
+  --bg2: #ffffff;
+  --ink: #1c2333;
+  --muted: #697386;
+  --rule: #e4e8f1;
+  --accent: #5b6cff;
+  --accent2: #14b585;
+  --warn: #e0822e;
+  --font: var(--aif-font-body);
+  --font-mono: var(--aif-font-mono);
+}
+
+/* Dark mode tokens */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --aif-background: #111623;
+    --aif-foreground: #f6f7f9;
+    --aif-card: #1c2333;
+    --aif-card-foreground: #f6f7f9;
+    --aif-popover: #1c2333;
+    --aif-popover-foreground: #f6f7f9;
+    --aif-muted: #353b4d;
+    --aif-muted-foreground: #9ba4b8;
+    --aif-border: #353b4d;
+    --aif-input: #353b4d;
+    --aif-ring: #8e95ff;
+
+    --bg: #111623;
+    --bg2: #1c2333;
+    --ink: #f6f7f9;
+    --muted: #9ba4b8;
+    --rule: #353b4d;
+  }
+}
+
+html.light {
+  --aif-background: #f3f5fb;
+  --aif-foreground: #1c2333;
+  --aif-card: #ffffff;
+  --aif-card-foreground: #1c2333;
+  --aif-popover: #ffffff;
+  --aif-popover-foreground: #1c2333;
+  --aif-muted: #f6f7f9;
+  --aif-muted-foreground: #697386;
+  --aif-border: #e4e8f1;
+  --aif-input: #e4e8f1;
+  --aif-ring: #5b6cff;
+
+  --bg: #f3f5fb;
+  --bg2: #ffffff;
+  --ink: #1c2333;
+  --muted: #697386;
+  --rule: #e4e8f1;
+}
+
+html.dark {
+  --aif-background: #111623;
+  --aif-foreground: #f6f7f9;
+  --aif-card: #1c2333;
+  --aif-card-foreground: #f6f7f9;
+  --aif-popover: #1c2333;
+  --aif-popover-foreground: #f6f7f9;
+  --aif-muted: #353b4d;
+  --aif-muted-foreground: #9ba4b8;
+  --aif-border: #353b4d;
+  --aif-input: #353b4d;
+  --aif-ring: #8e95ff;
+
+  --bg: #111623;
+  --bg2: #1c2333;
+  --ink: #f6f7f9;
+  --muted: #9ba4b8;
+  --rule: #353b4d;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--aif-background);
+    --color-foreground: var(--aif-foreground);
+    --color-card: var(--aif-card);
+    --color-card-foreground: var(--aif-card-foreground);
+    --color-popover: var(--aif-popover);
+    --color-popover-foreground: var(--aif-popover-foreground);
+    --color-primary: var(--aif-primary);
+    --color-primary-foreground: var(--aif-primary-foreground);
+    --color-muted: var(--aif-muted);
+    --color-muted-foreground: var(--aif-muted-foreground);
+    --color-border: var(--aif-border);
+    --color-input: var(--aif-input);
+    --color-ring: var(--aif-ring);
+    --color-accent: var(--accent);
+    --radius-sm: var(--aif-radius-small);
+    --radius-md: var(--aif-radius-medium);
+    --radius-lg: var(--aif-radius-large);
+  }
+  @layer base {
+    body { background: var(--aif-background); color: var(--aif-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--aif-background); }
+      .text-background { color: var(--aif-background); }
+      .border-background { border-color: var(--aif-background); }
+      .ring-background { --tw-ring-color: var(--aif-background); }
+      .bg-foreground { background-color: var(--aif-foreground); }
+      .text-foreground { color: var(--aif-foreground); }
+      .border-foreground { border-color: var(--aif-foreground); }
+      .ring-foreground { --tw-ring-color: var(--aif-foreground); }
+      .bg-card { background-color: var(--aif-card); }
+      .text-card { color: var(--aif-card); }
+      .border-card { border-color: var(--aif-card); }
+      .ring-card { --tw-ring-color: var(--aif-card); }
+      .bg-card-foreground { background-color: var(--aif-card-foreground); }
+      .text-card-foreground { color: var(--aif-card-foreground); }
+      .border-card-foreground { border-color: var(--aif-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--aif-card-foreground); }
+      .bg-popover { background-color: var(--aif-popover); }
+      .text-popover { color: var(--aif-popover); }
+      .border-popover { border-color: var(--aif-popover); }
+      .ring-popover { --tw-ring-color: var(--aif-popover); }
+      .bg-popover-foreground { background-color: var(--aif-popover-foreground); }
+      .text-popover-foreground { color: var(--aif-popover-foreground); }
+      .border-popover-foreground { border-color: var(--aif-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--aif-popover-foreground); }
+      .bg-primary { background-color: var(--aif-primary); }
+      .text-primary { color: var(--aif-primary); }
+      .border-primary { border-color: var(--aif-primary); }
+      .ring-primary { --tw-ring-color: var(--aif-primary); }
+      .bg-primary-foreground { background-color: var(--aif-primary-foreground); }
+      .text-primary-foreground { color: var(--aif-primary-foreground); }
+      .border-primary-foreground { border-color: var(--aif-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--aif-primary-foreground); }
+      .bg-muted { background-color: var(--aif-muted); }
+      .text-muted { color: var(--aif-muted); }
+      .border-muted { border-color: var(--aif-muted); }
+      .ring-muted { --tw-ring-color: var(--aif-muted); }
+      .bg-muted-foreground { background-color: var(--aif-muted-foreground); }
+      .text-muted-foreground { color: var(--aif-muted-foreground); }
+      .border-muted-foreground { border-color: var(--aif-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--aif-muted-foreground); }
+      .bg-border { background-color: var(--aif-border); }
+      .text-border { color: var(--aif-border); }
+      .border-border { border-color: var(--aif-border); }
+      .ring-border { --tw-ring-color: var(--aif-border); }
+      .bg-input { background-color: var(--aif-input); }
+      .text-input { color: var(--aif-input); }
+      .border-input { border-color: var(--aif-input); }
+      .ring-input { --tw-ring-color: var(--aif-input); }
+      .bg-ring { background-color: var(--aif-ring); }
+      .text-ring { color: var(--aif-ring); }
+      .border-ring { border-color: var(--aif-ring); }
+      .ring-ring { --tw-ring-color: var(--aif-ring); }
+      .bg-accent { background-color: var(--accent); }
+      .text-accent { color: var(--accent); }
+      .border-accent { border-color: var(--accent); }
+      .ring-accent { --tw-ring-color: var(--accent); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="flex min-h-screen flex-col bg-background font-sans antialiased">
+    <!-- Global top navigation -->
+    <header class="sticky top-0 z-50 w-full border-b border-[var(--aif-border)] bg-[var(--aif-card)]/80 backdrop-blur">
+      <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <a href="index.html" class="flex items-center gap-2 text-xl font-bold text-[var(--aif-foreground)]" data-dom-id="nav-home">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--aif-primary)] text-[var(--aif-primary-foreground)]">
+            <i data-lucide="messages-square" class="h-5 w-5"></i>
+          </span>
+          <span>AI 论坛</span>
+        </a>
+
+        <nav class="hidden items-center gap-1 md:flex">
+          <a href="index.html" data-nav-key="home" data-dom-id="nav-home" class="nav-item rounded-md px-3 py-2 text-sm font-medium text-[var(--aif-muted-foreground)] hover:bg-[var(--aif-muted)] hover:text-[var(--aif-foreground)]">首页</a>
+          <a href="explore.html" data-nav-key="explore" data-dom-id="nav-explore" data-active="true" class="nav-item rounded-md bg-[var(--aif-primary-50)] px-3 py-2 text-sm font-semibold text-[var(--aif-primary)]">问题广场</a>
+          <a href="dashboard.html" data-nav-key="dashboard" data-dom-id="nav-dashboard" class="nav-item rounded-md px-3 py-2 text-sm font-medium text-[var(--aif-muted-foreground)] hover:bg-[var(--aif-muted)] hover:text-[var(--aif-foreground)]">数据看板</a>
+        </nav>
+
+        <div class="flex items-center gap-3">
+          <form class="relative hidden sm:block" onsubmit="return false;">
+            <input type="text" placeholder="搜索问题…" class="h-9 w-64 rounded-md border border-[var(--aif-input)] bg-[var(--aif-muted)] px-3 pr-9 text-sm text-[var(--aif-foreground)] placeholder:text-[var(--aif-muted-foreground)] focus:border-[var(--aif-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--aif-ring)]/20" />
+            <button type="submit" data-dom-id="search-submit" class="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-[var(--aif-muted-foreground)] hover:text-[var(--aif-foreground)]">
+              <i data-lucide="search" class="h-4 w-4"></i>
+            </button>
+          </form>
+          <a href="ask.html" data-dom-id="btn-ask" class="inline-flex items-center gap-1.5 rounded-md bg-[var(--aif-primary)] px-3 py-2 text-sm font-semibold text-[var(--aif-primary-foreground)] hover:bg-[var(--aif-primary-600)]">
+            <i data-lucide="plus" class="h-4 w-4"></i>
+            <span class="hidden sm:inline">提问</span>
+          </a>
+          <button class="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--aif-primary-300)] to-[var(--state-success)] text-xs font-bold text-white" data-dom-id="identity-chip" title="匿名身份">
+            匿
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page title region -->
+    <section class="w-full border-b border-[var(--aif-border)] bg-[var(--aif-card)]">
+      <div class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-[var(--aif-foreground)] sm:text-3xl">问题广场</h1>
+          <p class="mt-1 text-sm text-[var(--aif-muted-foreground)]">浏览社区里的全部问题，发现有趣的讨论</p>
+        </div>
+        <div class="inline-flex items-center rounded-lg border border-[var(--aif-border)] bg-[var(--aif-muted)] p-1">
+          <button type="button" data-dom-id="sort-latest" data-sort="latest" class="sort-tab inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium bg-[var(--aif-card)] text-[var(--aif-primary)] shadow-sm">最新</button>
+          <button type="button" data-dom-id="sort-hot" data-sort="hot" class="sort-tab inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-[var(--aif-muted-foreground)] hover:text-[var(--aif-foreground)]">热度</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main content region -->
+    <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+      <div class="flex flex-col gap-4">
+        <!-- Question card 1 -->
+        <a href="detail.html" data-dom-id="card-question-1" class="group block rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm transition-all hover:border-[var(--aif-primary-300)] hover:shadow-md">
+          <h2 class="text-lg font-semibold text-[var(--aif-foreground)] group-hover:text-[var(--aif-primary)]">如何评价最新的 GPT-5 预览版在代码生成上的表现？</h2>
+          <p class="mt-2 line-clamp-2 text-sm text-[var(--aif-muted-foreground)]">最近拿到了 GPT-5 的 preview 权限，测试了一周后发现长上下文里的逻辑一致性有明显提升，但复杂依赖注入场景还是会出现幻觉。大家有类似的体验吗？</p>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center rounded-md bg-[var(--aif-primary-50)] px-2 py-0.5 text-xs font-medium text-[var(--aif-primary)]">大模型</span>
+            <span class="inline-flex items-center rounded-md bg-[var(--aif-muted)] px-2 py-0.5 text-xs font-medium text-[var(--aif-muted-foreground)]">编程辅助</span>
+          </div>
+          <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-[var(--aif-muted-foreground)]">
+            <span class="inline-flex items-center gap-1"><i data-lucide="eye" class="h-3.5 w-3.5"></i> 1,248 浏览</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="message-circle" class="h-3.5 w-3.5"></i> 36 回答</span>
+            <span class="inline-flex items-center gap-1 text-[var(--state-success)]"><i data-lucide="thumbs-up" class="h-3.5 w-3.5"></i> 89 赞同</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="h-3.5 w-3.5"></i> 2 小时前</span>
+          </div>
+        </a>
+
+        <!-- Question card 2 -->
+        <article class="rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm">
+          <h2 class="text-lg font-semibold text-[var(--aif-foreground)]">本地运行 70B 模型，显存 24GB 够吗？</h2>
+          <p class="mt-2 line-clamp-2 text-sm text-[var(--aif-muted-foreground)]">想在自己的工作站上部署一个 70B 参数的模型做离线推理，目前只有一张 RTX 4090。量化到 4bit 之后能不能跑起来？</p>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center rounded-md bg-[var(--aif-primary-50)] px-2 py-0.5 text-xs font-medium text-[var(--aif-primary)]">模型部署</span>
+            <span class="inline-flex items-center rounded-md bg-[var(--aif-muted)] px-2 py-0.5 text-xs font-medium text-[var(--aif-muted-foreground)]">硬件</span>
+          </div>
+          <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-[var(--aif-muted-foreground)]">
+            <span class="inline-flex items-center gap-1"><i data-lucide="eye" class="h-3.5 w-3.5"></i> 3,620 浏览</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="message-circle" class="h-3.5 w-3.5"></i> 52 回答</span>
+            <span class="inline-flex items-center gap-1 text-[var(--state-success)]"><i data-lucide="thumbs-up" class="h-3.5 w-3.5"></i> 215 赞同</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="h-3.5 w-3.5"></i> 5 小时前</span>
+          </div>
+        </article>
+
+        <!-- Question card 3 -->
+        <article class="rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm">
+          <h2 class="text-lg font-semibold text-[var(--aif-foreground)]">AI 辅助编程时，如何有效控制上下文窗口的成本？</h2>
+          <p class="mt-2 line-clamp-2 text-sm text-[var(--aif-muted-foreground)]">项目越来越大，每次让 AI 改代码都要贴很多文件，token 消耗飙升。有没有什么策略可以只让 AI 看到相关的代码片段？</p>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center rounded-md bg-[var(--aif-primary-50)] px-2 py-0.5 text-xs font-medium text-[var(--aif-primary)]">编程辅助</span>
+            <span class="inline-flex items-center rounded-md bg-[var(--aif-muted)] px-2 py-0.5 text-xs font-medium text-[var(--aif-muted-foreground)]">最佳实践</span>
+          </div>
+          <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-[var(--aif-muted-foreground)]">
+            <span class="inline-flex items-center gap-1"><i data-lucide="eye" class="h-3.5 w-3.5"></i> 892 浏览</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="message-circle" class="h-3.5 w-3.5"></i> 18 回答</span>
+            <span class="inline-flex items-center gap-1 text-[var(--state-success)]"><i data-lucide="thumbs-up" class="h-3.5 w-3.5"></i> 47 赞同</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="h-3.5 w-3.5"></i> 8 小时前</span>
+          </div>
+        </article>
+
+        <!-- Question card 4 -->
+        <article class="rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm">
+          <h2 class="text-lg font-semibold text-[var(--aif-foreground)]">有没有好用的开源 RAG 框架推荐？</h2>
+          <p class="mt-2 line-clamp-2 text-sm text-[var(--aif-muted-foreground)]">需要处理 PDF、Word 和网页三种来源，支持向量检索 + 关键词混合召回，最好有中文分词优化。目前看了 LangChain 和 LlamaIndex，想听听实际落地经验。</p>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center rounded-md bg-[var(--aif-primary-50)] px-2 py-0.5 text-xs font-medium text-[var(--aif-primary)]">RAG</span>
+            <span class="inline-flex items-center rounded-md bg-[var(--aif-muted)] px-2 py-0.5 text-xs font-medium text-[var(--aif-muted-foreground)]">开源工具</span>
+          </div>
+          <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-[var(--aif-muted-foreground)]">
+            <span class="inline-flex items-center gap-1"><i data-lucide="eye" class="h-3.5 w-3.5"></i> 2,150 浏览</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="message-circle" class="h-3.5 w-3.5"></i> 41 回答</span>
+            <span class="inline-flex items-center gap-1 text-[var(--state-success)]"><i data-lucide="thumbs-up" class="h-3.5 w-3.5"></i> 134 赞同</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="h-3.5 w-3.5"></i> 1 天前</span>
+          </div>
+        </article>
+
+        <!-- Question card 5 -->
+        <article class="rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm">
+          <h2 class="text-lg font-semibold text-[var(--aif-foreground)]">Prompt 工程还有必要深入学习吗？</h2>
+          <p class="mt-2 line-clamp-2 text-sm text-[var(--aif-muted-foreground)]">随着模型推理能力变强，很多以前的 prompt 技巧似乎失效了。现在投入时间系统学习 prompt 工程是否还值得？</p>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center rounded-md bg-[var(--aif-primary-50)] px-2 py-0.5 text-xs font-medium text-[var(--aif-primary)]">Prompt</span>
+            <span class="inline-flex items-center rounded-md bg-[var(--aif-muted)] px-2 py-0.5 text-xs font-medium text-[var(--aif-muted-foreground)]">职业发展</span>
+          </div>
+          <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-[var(--aif-muted-foreground)]">
+            <span class="inline-flex items-center gap-1"><i data-lucide="eye" class="h-3.5 w-3.5"></i> 5,430 浏览</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="message-circle" class="h-3.5 w-3.5"></i> 127 回答</span>
+            <span class="inline-flex items-center gap-1 text-[var(--state-success)]"><i data-lucide="thumbs-up" class="h-3.5 w-3.5"></i> 402 赞同</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="h-3.5 w-3.5"></i> 2 天前</span>
+          </div>
+        </article>
+
+        <!-- Question card 6 -->
+        <article class="rounded-xl border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm">
+          <h2 class="text-lg font-semibold text-[var(--aif-foreground)]">AI 生成的单元测试，可信度到底怎么样？</h2>
+          <p class="mt-2 line-clamp-2 text-sm text-[var(--aif-muted-foreground)]">让 AI 给核心业务逻辑补了一批单元测试，覆盖率上去了，但担心边界条件覆盖不足。大家在实际项目里怎么验证 AI 生成测试的质量？</p>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center rounded-md bg-[var(--aif-primary-50)] px-2 py-0.5 text-xs font-medium text-[var(--aif-primary)]">测试</span>
+            <span class="inline-flex items-center rounded-md bg-[var(--aif-muted)] px-2 py-0.5 text-xs font-medium text-[var(--aif-muted-foreground)]">代码质量</span>
+          </div>
+          <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-[var(--aif-muted-foreground)]">
+            <span class="inline-flex items-center gap-1"><i data-lucide="eye" class="h-3.5 w-3.5"></i> 1,876 浏览</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="message-circle" class="h-3.5 w-3.5"></i> 33 回答</span>
+            <span class="inline-flex items-center gap-1 text-[var(--state-success)]"><i data-lucide="thumbs-up" class="h-3.5 w-3.5"></i> 96 赞同</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="h-3.5 w-3.5"></i> 3 天前</span>
+          </div>
+        </article>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto w-full border-t border-[var(--aif-border)] bg-[var(--aif-card)] py-8">
+      <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-[var(--aif-muted-foreground)] sm:flex-row sm:px-6 lg:px-8">
+        <p>AI 辅助论坛 · 匿名问答社区</p>
+        <p>数据仅存储于本地，无后端 · 无账号</p>
+      </div>
+    </footer>
+
+    <script>
+      // Same-screen sort toggle wiring
+      const sortLatest = document.querySelector('[data-dom-id="sort-latest"]');
+      const sortHot = document.querySelector('[data-dom-id="sort-hot"]');
+      const sortTabs = [sortLatest, sortHot];
+
+      function setActiveSort(active) {
+        sortTabs.forEach(tab => {
+          if (tab === active) {
+            tab.classList.add('bg-[var(--aif-card)]', 'text-[var(--aif-primary)]', 'shadow-sm');
+            tab.classList.remove('text-[var(--aif-muted-foreground)]', 'hover:text-[var(--aif-foreground)]');
+          } else {
+            tab.classList.remove('bg-[var(--aif-card)]', 'text-[var(--aif-primary)]', 'shadow-sm');
+            tab.classList.add('text-[var(--aif-muted-foreground)]', 'hover:text-[var(--aif-foreground)]');
+          }
+        });
+      }
+
+      sortLatest.addEventListener('click', () => setActiveSort(sortLatest));
+      sortHot.addEventListener('click', () => setActiveSort(sortHot));
+
+      lucide.createIcons();
+    </script>
+</body>
+</html>

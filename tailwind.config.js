@@ -1,0 +1,68 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        // AI 论坛配色（aif = AI Forum）
+        'aif-primary-50': '#eef0ff',
+        'aif-primary-100': '#d8dcff',
+        'aif-primary-200': '#b6bdff',
+        'aif-primary-300': '#8e95ff',
+        'aif-primary-400': '#6c78ff',
+        'aif-primary-500': '#5b6cff',
+        'aif-primary-600': '#4a59e6',
+        'aif-primary-700': '#3d49be',
+        'aif-primary-800': '#333e9a',
+        'aif-primary-900': '#2d3779',
+        'aif-neutral-50': '#f6f7f9',
+        'aif-neutral-100': '#eceef2',
+        'aif-neutral-200': '#e4e8f1',
+        'aif-neutral-300': '#cbd2e0',
+        'aif-neutral-400': '#9ba4b8',
+        'aif-neutral-500': '#697386',
+        'aif-neutral-600': '#4b5366',
+        'aif-neutral-700': '#353b4d',
+        'aif-neutral-800': '#1c2333',
+        'aif-neutral-900': '#111623',
+        // 语义色
+        'aif-background': '#f3f5fb',
+        'aif-foreground': '#1c2333',
+        'aif-card': '#ffffff',
+        'aif-card-foreground': '#1c2333',
+        'aif-popover': '#ffffff',
+        'aif-popover-foreground': '#1c2333',
+        'aif-primary': '#5b6cff',
+        'aif-primary-foreground': '#ffffff',
+        'aif-muted': '#f6f7f9',
+        'aif-muted-foreground': '#697386',
+        'aif-border': '#e4e8f1',
+        'aif-input': '#e4e8f1',
+        'aif-ring': '#5b6cff',
+        'aif-success': '#14b585',
+        'aif-warning': '#e0822e',
+        'aif-error': '#ef4444',
+        'aif-success-bg': 'rgba(20, 181, 133, 0.10)',
+        'aif-warning-bg': 'rgba(224, 130, 46, 0.10)',
+        'aif-error-bg': 'rgba(239, 68, 68, 0.10)',
+        'aif-info-bg': 'rgba(91, 108, 255, 0.10)',
+      },
+      fontFamily: {
+        'aif-sans': ['"InstrumentSans"', '"PingFang SC"', '"Microsoft YaHei"', '"Noto Sans SC"', 'sans-serif'],
+        'aif-mono': ['"GeistMono"', '"SFMono-Regular"', 'Consolas', 'monospace'],
+      },
+      boxShadow: {
+        'aif-card': '0 6px 24px rgba(28,35,51,0.05)',
+      },
+      borderRadius: {
+        'aif-sm': '4px',
+        'aif-md': '8px',
+        'aif-lg': '12px',
+      },
+    },
+  },
+  plugins: [],
+}

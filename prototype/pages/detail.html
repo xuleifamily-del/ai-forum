@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问题详情页</title>
+    <style id="theme-vars">
+/* AI 辅助论坛原型 · 品牌颜色与字体系统 */
+
+@font-face {
+  font-family: 'InstrumentSans';
+  src: url('assets/fonts/InstrumentSans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'InstrumentSans';
+  src: url('assets/fonts/InstrumentSans-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'GeistMono';
+  src: url('assets/fonts/GeistMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  /* Primary scale — derived from #5b6cff */
+  --aif-primary-50: #eef0ff;
+  --aif-primary-100: #d8dcff;
+  --aif-primary-200: #b6bdff;
+  --aif-primary-300: #8e95ff;
+  --aif-primary-400: #6c78ff;
+  --aif-primary-500: #5b6cff;
+  --aif-primary-600: #4a59e6;
+  --aif-primary-700: #3d49be;
+  --aif-primary-800: #333e9a;
+  --aif-primary-900: #2d3779;
+
+  /* Neutral scale — derived from #1c2333 */
+  --aif-neutral-50: #f6f7f9;
+  --aif-neutral-100: #eceef2;
+  --aif-neutral-200: #e4e8f1;
+  --aif-neutral-300: #cbd2e0;
+  --aif-neutral-400: #9ba4b8;
+  --aif-neutral-500: #697386;
+  --aif-neutral-600: #4b5366;
+  --aif-neutral-700: #353b4d;
+  --aif-neutral-800: #1c2333;
+  --aif-neutral-900: #111623;
+
+  /* Semantic aliases */
+  --aif-background: #f3f5fb;
+  --aif-foreground: #1c2333;
+  --aif-card: #ffffff;
+  --aif-card-foreground: #1c2333;
+  --aif-popover: #ffffff;
+  --aif-popover-foreground: #1c2333;
+  --aif-primary: #5b6cff;
+  --aif-primary-foreground: #ffffff;
+  --aif-muted: #f6f7f9;
+  --aif-muted-foreground: #697386;
+  --aif-border: #e4e8f1;
+  --aif-input: #e4e8f1;
+  --aif-ring: #5b6cff;
+
+  /* Radius */
+  --aif-radius-small: 4px;
+  --aif-radius-medium: 8px;
+  --aif-radius-large: 12px;
+
+  /* State colors */
+  --state-success: #14b585;
+  --state-success-bg: rgba(20, 181, 133, 0.10);
+  --state-warning: #e0822e;
+  --state-warning-bg: rgba(224, 130, 46, 0.10);
+  --state-error: #ef4444;
+  --state-error-bg: rgba(239, 68, 68, 0.10);
+  --state-info: #5b6cff;
+  --state-info-bg: rgba(91, 108, 255, 0.10);
+
+  /* Typography */
+  --aif-font-title: 'InstrumentSans', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --aif-font-body: 'InstrumentSans', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --aif-font-mono: 'GeistMono', 'SFMono-Regular', Consolas, monospace;
+
+  /* Legacy aliases for direct use */
+  --bg: #f3f5fb;
+  --bg2: #ffffff;
+  --ink: #1c2333;
+  --muted: #697386;
+  --rule: #e4e8f1;
+  --accent: #5b6cff;
+  --accent2: #14b585;
+  --warn: #e0822e;
+  --font: var(--aif-font-body);
+  --font-mono: var(--aif-font-mono);
+}
+
+/* Dark mode tokens */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --aif-background: #111623;
+    --aif-foreground: #f6f7f9;
+    --aif-card: #1c2333;
+    --aif-card-foreground: #f6f7f9;
+    --aif-popover: #1c2333;
+    --aif-popover-foreground: #f6f7f9;
+    --aif-muted: #353b4d;
+    --aif-muted-foreground: #9ba4b8;
+    --aif-border: #353b4d;
+    --aif-input: #353b4d;
+    --aif-ring: #8e95ff;
+
+    --bg: #111623;
+    --bg2: #1c2333;
+    --ink: #f6f7f9;
+    --muted: #9ba4b8;
+    --rule: #353b4d;
+  }
+}
+
+html.light {
+  --aif-background: #f3f5fb;
+  --aif-foreground: #1c2333;
+  --aif-card: #ffffff;
+  --aif-card-foreground: #1c2333;
+  --aif-popover: #ffffff;
+  --aif-popover-foreground: #1c2333;
+  --aif-muted: #f6f7f9;
+  --aif-muted-foreground: #697386;
+  --aif-border: #e4e8f1;
+  --aif-input: #e4e8f1;
+  --aif-ring: #5b6cff;
+
+  --bg: #f3f5fb;
+  --bg2: #ffffff;
+  --ink: #1c2333;
+  --muted: #697386;
+  --rule: #e4e8f1;
+}
+
+html.dark {
+  --aif-background: #111623;
+  --aif-foreground: #f6f7f9;
+  --aif-card: #1c2333;
+  --aif-card-foreground: #f6f7f9;
+  --aif-popover: #1c2333;
+  --aif-popover-foreground: #f6f7f9;
+  --aif-muted: #353b4d;
+  --aif-muted-foreground: #9ba4b8;
+  --aif-border: #353b4d;
+  --aif-input: #353b4d;
+  --aif-ring: #8e95ff;
+
+  --bg: #111623;
+  --bg2: #1c2333;
+  --ink: #f6f7f9;
+  --muted: #9ba4b8;
+  --rule: #353b4d;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--aif-background);
+    --color-foreground: var(--aif-foreground);
+    --color-card: var(--aif-card);
+    --color-card-foreground: var(--aif-card-foreground);
+    --color-popover: var(--aif-popover);
+    --color-popover-foreground: var(--aif-popover-foreground);
+    --color-primary: var(--aif-primary);
+    --color-primary-foreground: var(--aif-primary-foreground);
+    --color-muted: var(--aif-muted);
+    --color-muted-foreground: var(--aif-muted-foreground);
+    --color-border: var(--aif-border);
+    --color-input: var(--aif-input);
+    --color-ring: var(--aif-ring);
+    --color-accent: var(--accent);
+    --radius-sm: var(--aif-radius-small);
+    --radius-md: var(--aif-radius-medium);
+    --radius-lg: var(--aif-radius-large);
+  }
+  @layer base {
+    body { background: var(--aif-background); color: var(--aif-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--aif-background); }
+      .text-background { color: var(--aif-background); }
+      .border-background { border-color: var(--aif-background); }
+      .ring-background { --tw-ring-color: var(--aif-background); }
+      .bg-foreground { background-color: var(--aif-foreground); }
+      .text-foreground { color: var(--aif-foreground); }
+      .border-foreground { border-color: var(--aif-foreground); }
+      .ring-foreground { --tw-ring-color: var(--aif-foreground); }
+      .bg-card { background-color: var(--aif-card); }
+      .text-card { color: var(--aif-card); }
+      .border-card { border-color: var(--aif-card); }
+      .ring-card { --tw-ring-color: var(--aif-card); }
+      .bg-card-foreground { background-color: var(--aif-card-foreground); }
+      .text-card-foreground { color: var(--aif-card-foreground); }
+      .border-card-foreground { border-color: var(--aif-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--aif-card-foreground); }
+      .bg-popover { background-color: var(--aif-popover); }
+      .text-popover { color: var(--aif-popover); }
+      .border-popover { border-color: var(--aif-popover); }
+      .ring-popover { --tw-ring-color: var(--aif-popover); }
+      .bg-popover-foreground { background-color: var(--aif-popover-foreground); }
+      .text-popover-foreground { color: var(--aif-popover-foreground); }
+      .border-popover-foreground { border-color: var(--aif-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--aif-popover-foreground); }
+      .bg-primary { background-color: var(--aif-primary); }
+      .text-primary { color: var(--aif-primary); }
+      .border-primary { border-color: var(--aif-primary); }
+      .ring-primary { --tw-ring-color: var(--aif-primary); }
+      .bg-primary-foreground { background-color: var(--aif-primary-foreground); }
+      .text-primary-foreground { color: var(--aif-primary-foreground); }
+      .border-primary-foreground { border-color: var(--aif-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--aif-primary-foreground); }
+      .bg-muted { background-color: var(--aif-muted); }
+      .text-muted { color: var(--aif-muted); }
+      .border-muted { border-color: var(--aif-muted); }
+      .ring-muted { --tw-ring-color: var(--aif-muted); }
+      .bg-muted-foreground { background-color: var(--aif-muted-foreground); }
+      .text-muted-foreground { color: var(--aif-muted-foreground); }
+      .border-muted-foreground { border-color: var(--aif-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--aif-muted-foreground); }
+      .bg-border { background-color: var(--aif-border); }
+      .text-border { color: var(--aif-border); }
+      .border-border { border-color: var(--aif-border); }
+      .ring-border { --tw-ring-color: var(--aif-border); }
+      .bg-input { background-color: var(--aif-input); }
+      .text-input { color: var(--aif-input); }
+      .border-input { border-color: var(--aif-input); }
+      .ring-input { --tw-ring-color: var(--aif-input); }
+      .bg-ring { background-color: var(--aif-ring); }
+      .text-ring { color: var(--aif-ring); }
+      .border-ring { border-color: var(--aif-ring); }
+      .ring-ring { --tw-ring-color: var(--aif-ring); }
+      .bg-accent { background-color: var(--accent); }
+      .text-accent { color: var(--accent); }
+      .border-accent { border-color: var(--accent); }
+      .ring-accent { --tw-ring-color: var(--accent); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <!-- Shared Project Shell: AI 辅助论坛原型 -->
+    <!-- SLOTS: activeNavItem, pageTitle, pageMainContent -->
+
+    <!-- Global top navigation -->
+    <header class="sticky top-0 z-50 w-full border-b border-[var(--aif-border)] bg-[var(--aif-card)]/80 backdrop-blur">
+      <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <a href="index.html" class="flex items-center gap-2 text-xl font-bold text-[var(--aif-foreground)]" data-dom-id="nav-home" data-target-node="page-index">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--aif-primary)] text-[var(--aif-primary-foreground)]">
+            <i data-lucide="messages-square" class="h-5 w-5"></i>
+          </span>
+          <span>AI 论坛</span>
+        </a>
+
+        <nav class="hidden items-center gap-1 md:flex">
+          <a href="index.html" data-nav-key="home" data-dom-id="nav-home" data-target-node="page-index" class="nav-item rounded-md px-3 py-2 text-sm font-medium text-[var(--aif-muted-foreground)] hover:bg-[var(--aif-muted)] hover:text-[var(--aif-foreground)]">首页</a>
+          <a href="explore.html" data-nav-key="explore" data-dom-id="nav-explore" class="nav-item rounded-md px-3 py-2 text-sm font-medium text-[var(--aif-muted-foreground)] hover:bg-[var(--aif-muted)] hover:text-[var(--aif-foreground)]">问题广场</a>
+          <a href="dashboard.html" data-nav-key="dashboard" data-dom-id="nav-dashboard" class="nav-item rounded-md px-3 py-2 text-sm font-medium text-[var(--aif-muted-foreground)] hover:bg-[var(--aif-muted)] hover:text-[var(--aif-foreground)]">数据看板</a>
+        </nav>
+
+        <div class="flex items-center gap-3">
+          <form class="relative hidden sm:block" onsubmit="return false;">
+            <input type="text" placeholder="搜索问题…" class="h-9 w-64 rounded-md border border-[var(--aif-input)] bg-[var(--aif-muted)] px-3 pr-9 text-sm text-[var(--aif-foreground)] placeholder:text-[var(--aif-muted-foreground)] focus:border-[var(--aif-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--aif-ring)]/20" />
+            <button type="submit" data-dom-id="search-submit" data-target-node="page-search" data-hide-edge="true" class="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-[var(--aif-muted-foreground)] hover:text-[var(--aif-foreground)]">
+              <i data-lucide="search" class="h-4 w-4"></i>
+            </button>
+          </form>
+          <a href="ask.html" data-dom-id="btn-ask" data-target-node="page-ask" data-hide-edge="true" class="inline-flex items-center gap-1.5 rounded-md bg-[var(--aif-primary)] px-3 py-2 text-sm font-semibold text-[var(--aif-primary-foreground)] hover:bg-[var(--aif-primary-600)]">
+            <i data-lucide="plus" class="h-4 w-4"></i>
+            <span class="hidden sm:inline">提问</span>
+          </a>
+          <button class="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--aif-primary-300)] to-[var(--state-success)] text-xs font-bold text-white" data-dom-id="identity-chip" title="匿名身份">
+            匿
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page title region -->
+    <div class="border-b border-[var(--aif-border)] bg-[var(--aif-card)]">
+      <div class="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
+        <button type="button" data-dom-id="btn-back" data-target-node="page-index" data-hide-edge="true" class="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--aif-muted-foreground)] hover:text-[var(--aif-primary)]">
+          <i data-lucide="arrow-left" class="h-4 w-4"></i>
+          <span>返回首页</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main content region -->
+    <main class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <!-- Left column -->
+        <div class="flex flex-col gap-6 lg:col-span-2">
+          <!-- AI Summary card -->
+          <section class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm" aria-label="AI 摘要">
+            <div class="border-l-4 border-[var(--aif-primary)] pl-4">
+              <div class="mb-3 flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center rounded-full bg-[var(--aif-primary)] px-2.5 py-0.5 text-xs font-semibold text-[var(--aif-primary-foreground)]">AI 摘要</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-[var(--state-success-bg)] px-2.5 py-0.5 text-xs font-medium" style="color: var(--state-success);">
+                  <i data-lucide="check-circle-2" class="h-3 w-3"></i>
+                  <span>状态稳定</span>
+                </span>
+              </div>
+              <p class="text-sm leading-relaxed text-[var(--aif-card-foreground)]">
+                该问题通常由依赖数组中的对象/函数引用不稳定导致，React 在每次渲染时认为依赖发生变化，从而重复触发 effect。
+                <a href="#ref-1" class="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded bg-[var(--aif-primary-100)] px-1 text-xs font-semibold text-[var(--aif-primary-700)] hover:underline">[1]</a>
+                建议优先使用 <code class="rounded bg-[var(--aif-muted)] px-1 py-0.5 font-mono text-xs" style="font-family: var(--aif-font-mono);">useMemo</code>/<code class="rounded bg-[var(--aif-muted)] px-1 py-0.5 font-mono text-xs" style="font-family: var(--aif-font-mono);">useCallback</code> 稳定依赖，或通过 <code class="rounded bg-[var(--aif-muted)] px-1 py-0.5 font-mono text-xs" style="font-family: var(--aif-font-mono);">eslint-plugin-react-hooks</code> 的 exhaustive-deps 规则定位遗漏。
+                <a href="#ref-2" class="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded bg-[var(--aif-primary-100)] px-1 text-xs font-semibold text-[var(--aif-primary-700)] hover:underline">[2]</a>
+              </p>
+              <div class="mt-4 flex flex-wrap items-center gap-2">
+                <button type="button" class="inline-flex items-center gap-1.5 rounded-md border border-[var(--aif-border)] bg-[var(--aif-muted)] px-3 py-1.5 text-xs font-medium text-[var(--aif-foreground)] hover:bg-[var(--aif-border)]">
+                  <i data-lucide="thumbs-up" class="h-3.5 w-3.5"></i>
+                  <span>有帮助</span>
+                </button>
+                <button type="button" class="inline-flex items-center gap-1.5 rounded-md border border-[var(--aif-border)] bg-[var(--aif-muted)] px-3 py-1.5 text-xs font-medium text-[var(--aif-foreground)] hover:bg-[var(--aif-border)]">
+                  <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
+                  <span>需更新</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Question body -->
+          <article class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm">
+            <h1 class="text-xl font-bold leading-snug text-[var(--aif-foreground)] sm:text-2xl">React useEffect 在依赖数组完整的情况下仍重复执行，如何排查？</h1>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <span class="rounded-md bg-[var(--aif-primary-50)] px-2 py-0.5 text-xs font-medium text-[var(--aif-primary-700)]">react</span>
+              <span class="rounded-md bg-[var(--aif-primary-50)] px-2 py-0.5 text-xs font-medium text-[var(--aif-primary-700)]">hooks</span>
+            </div>
+            <div class="mt-5 space-y-4 text-[var(--aif-card-foreground)]">
+              <p class="leading-relaxed">
+                我在组件里写了一个 <code class="rounded bg-[var(--aif-muted)] px-1 py-0.5 font-mono text-sm" style="font-family: var(--aif-font-mono);">useEffect</code>，依赖数组已经填了所有用到的变量，但浏览器里发现它还是会无限循环执行。我把依赖打印出来看，值并没有变化。
+              </p>
+              <p class="leading-relaxed">
+                我怀疑是引用类型的问题，但不确定怎么快速定位。请问有哪些排查步骤可以确认真正导致 effect 重新执行的依赖？
+              </p>
+              <div class="overflow-hidden rounded-lg border border-[var(--aif-border)] bg-[var(--aif-muted)]">
+                <div class="flex items-center justify-between border-b border-[var(--aif-border)] bg-[var(--aif-muted)] px-4 py-2">
+                  <span class="text-xs font-medium text-[var(--aif-muted-foreground)]">示例代码</span>
+                  <button type="button" class="text-xs font-medium text-[var(--aif-muted-foreground)] hover:text-[var(--aif-primary)]">复制</button>
+                </div>
+                <pre class="overflow-x-auto p-4 text-sm leading-relaxed" style="font-family: var(--aif-font-mono);"><code class="text-[var(--aif-foreground)]">useEffect(() => {
+  fetchUser(filter);
+}, [filter]);
+
+// filter 在父组件通过 useState 初始化
+const [filter, setFilter] = useState({ role: 'admin' });</code></pre>
+              </div>
+            </div>
+            <div class="mt-6 flex flex-wrap items-center gap-4 border-t border-[var(--aif-border)] pt-4 text-xs text-[var(--aif-muted-foreground)]">
+              <span class="inline-flex items-center gap-1">
+                <i data-lucide="eye" class="h-3.5 w-3.5"></i>
+                <span>1,248 次浏览</span>
+              </span>
+              <span class="inline-flex items-center gap-1">
+                <i data-lucide="clock" class="h-3.5 w-3.5"></i>
+                <span>发布于 2026-08-10 14:32</span>
+              </span>
+            </div>
+          </article>
+
+          <!-- Answers list -->
+          <section class="flex flex-col gap-4" aria-label="回答列表">
+            <h2 class="text-lg font-bold text-[var(--aif-foreground)]">3 个回答</h2>
+
+            <!-- AI initial answer (pinned) -->
+            <article class="relative rounded-lg border border-[var(--aif-primary-200)] bg-[var(--aif-primary-50)] p-5 shadow-sm">
+              <div class="mb-3 flex items-center gap-2">
+                <span class="inline-flex items-center gap-1 rounded-md bg-[var(--aif-primary)] px-2 py-1 text-xs font-semibold text-[var(--aif-primary-foreground)]">
+                  <i data-lucide="sparkles" class="h-3 w-3"></i>
+                  <span>AI 初始回答</span>
+                </span>
+              </div>
+              <div class="space-y-3 text-sm leading-relaxed text-[var(--aif-card-foreground)]">
+                <p>
+                  最常见的原因是依赖项虽然是"相同值"，但每次都是新的引用。对于对象或函数，React 使用 <code class="rounded bg-[var(--aif-muted)] px-1 py-0.5 font-mono text-xs" style="font-family: var(--aif-font-mono);">Object.is</code> 比较，因此 <code class="rounded bg-[var(--aif-muted)] px-1 py-0.5 font-mono text-xs" style="font-family: var(--aif-font-mono);">{ a: 1 } !== { a: 1 }</code> 会被判定为变化。
+                  <a href="#ref-1" class="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded bg-[var(--aif-primary-100)] px-1 text-xs font-semibold text-[var(--aif-primary-700)] hover:underline">[1]</a>
+                </p>
+                <p>
+                  排查步骤：1) 开启 React DevTools Profiler 查看渲染触发源；2) 将怀疑的依赖用 <code class="rounded bg-[var(--aif-muted)] px-1 py-0.5 font-mono text-xs" style="font-family: var(--aif-font-mono);">usePrevious</code> 或 <code class="rounded bg-[var(--aif-muted)] px-1 py-0.5 font-mono text-xs" style="font-family: var(--aif-font-mono);">useWhyDidYouUpdate</code> 做差异比较；3) 将不稳定依赖移入 ref 或使用 memoization。
+                  <a href="#ref-2" class="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded bg-[var(--aif-primary-100)] px-1 text-xs font-semibold text-[var(--aif-primary-700)] hover:underline">[2]</a>
+                </p>
+              </div>
+              <div class="mt-4 flex flex-wrap items-center gap-3 text-xs text-[var(--aif-muted-foreground)]">
+                <span class="inline-flex items-center gap-1">
+                  <i data-lucide="book-open" class="h-3.5 w-3.5"></i>
+                  <span>来源：React 官方文档 · Hooks FAQ</span>
+                </span>
+              </div>
+            </article>
+
+            <!-- Community answer 1 -->
+            <article class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm">
+              <div class="mb-3 flex items-start justify-between gap-4">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--aif-muted)] text-xs font-bold text-[var(--aif-muted-foreground)]">H</span>
+                  <div>
+                    <p class="text-sm font-semibold text-[var(--aif-foreground)]">HookMaster</p>
+                    <p class="text-xs text-[var(--aif-muted-foreground)]">2 小时前</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1 rounded-md border border-[var(--aif-border)] bg-[var(--aif-muted)] px-2 py-1">
+                  <button type="button" class="text-[var(--aif-muted-foreground)] hover:text-[var(--aif-primary)]">
+                    <i data-lucide="chevron-up" class="h-4 w-4"></i>
+                  </button>
+                  <span class="min-w-[1.5rem] text-center text-sm font-semibold text-[var(--aif-foreground)]">42</span>
+                  <button type="button" class="text-[var(--aif-muted-foreground)] hover:text-[var(--state-error)]">
+                    <i data-lucide="chevron-down" class="h-4 w-4"></i>
+                  </button>
+                </div>
+              </div>
+              <p class="text-sm leading-relaxed text-[var(--aif-card-foreground)]">
+                可以在 effect 内部把每个依赖打印出来，对比前后两次渲染。更省力的办法是安装 <code class="rounded bg-[var(--aif-muted)] px-1 py-0.5 font-mono text-xs" style="font-family: var(--aif-font-mono);">use-why-did-you-update</code>，它会直接标出哪个 prop 或 state 变了。
+              </p>
+            </article>
+
+            <!-- Community answer 2 -->
+            <article class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm">
+              <div class="mb-3 flex items-start justify-between gap-4">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--aif-primary-100)] text-xs font-bold text-[var(--aif-primary-700)]">R</span>
+                  <div>
+                    <p class="text-sm font-semibold text-[var(--aif-foreground)]">ReactFan</p>
+                    <p class="text-xs text-[var(--aif-muted-foreground)]">5 小时前</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1 rounded-md border border-[var(--aif-border)] bg-[var(--aif-muted)] px-2 py-1">
+                  <button type="button" class="text-[var(--aif-muted-foreground)] hover:text-[var(--aif-primary)]">
+                    <i data-lucide="chevron-up" class="h-4 w-4"></i>
+                  </button>
+                  <span class="min-w-[1.5rem] text-center text-sm font-semibold text-[var(--aif-foreground)]">18</span>
+                  <button type="button" class="text-[var(--aif-muted-foreground)] hover:text-[var(--state-error)]">
+                    <i data-lucide="chevron-down" class="h-4 w-4"></i>
+                  </button>
+                </div>
+              </div>
+              <p class="text-sm leading-relaxed text-[var(--aif-card-foreground)]">
+                如果 <code class="rounded bg-[var(--aif-muted)] px-1 py-0.5 font-mono text-xs" style="font-family: var(--aif-font-mono);">filter</code> 是从父组件传下来的对象，建议把它的字段拆成基本类型再传入依赖数组，而不是直接放整个对象。
+              </p>
+            </article>
+
+            <!-- Community answer 3 -->
+            <article class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm">
+              <div class="mb-3 flex items-start justify-between gap-4">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--state-success-bg)] text-xs font-bold" style="color: var(--state-success);">D</span>
+                  <div>
+                    <p class="text-sm font-semibold text-[var(--aif-foreground)]">DebugDuck</p>
+                    <p class="text-xs text-[var(--aif-muted-foreground)]">昨天</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1 rounded-md border border-[var(--aif-border)] bg-[var(--aif-muted)] px-2 py-1">
+                  <button type="button" class="text-[var(--aif-muted-foreground)] hover:text-[var(--aif-primary)]">
+                    <i data-lucide="chevron-up" class="h-4 w-4"></i>
+                  </button>
+                  <span class="min-w-[1.5rem] text-center text-sm font-semibold text-[var(--aif-foreground)]">7</span>
+                  <button type="button" class="text-[var(--aif-muted-foreground)] hover:text-[var(--state-error)]">
+                    <i data-lucide="chevron-down" class="h-4 w-4"></i>
+                  </button>
+                </div>
+              </div>
+              <p class="text-sm leading-relaxed text-[var(--aif-card-foreground)]">
+                还有一种可能是 effect 内部调用了 setState，导致重新渲染后又触发 effect。检查 effect 里是否有直接或间接的状态更新。
+              </p>
+            </article>
+          </section>
+
+          <!-- Inline answer editor -->
+          <section class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm" aria-label="撰写回答">
+            <h3 class="mb-3 text-base font-semibold text-[var(--aif-foreground)]">撰写你的回答</h3>
+            <textarea placeholder="分享你的思路、代码片段或排查经验…" class="min-h-[8rem] w-full resize-y rounded-lg border border-[var(--aif-input)] bg-[var(--aif-muted)] p-3 text-sm text-[var(--aif-foreground)] placeholder:text-[var(--aif-muted-foreground)] focus:border-[var(--aif-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--aif-ring)]/20" style="font-family: var(--aif-font-body);"></textarea>
+            <div class="mt-3 flex items-center justify-end gap-3">
+              <button type="button" class="rounded-md px-3 py-2 text-sm font-medium text-[var(--aif-muted-foreground)] hover:text-[var(--aif-foreground)]">取消</button>
+              <button type="submit" class="inline-flex items-center gap-1.5 rounded-md bg-[var(--aif-primary)] px-4 py-2 text-sm font-semibold text-[var(--aif-primary-foreground)] hover:bg-[var(--aif-primary-600)]">
+                <i data-lucide="send" class="h-4 w-4"></i>
+                <span>提交回答</span>
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right column -->
+        <aside class="flex flex-col gap-4 lg:col-span-1">
+          <div class="sticky top-20 rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm">
+            <h3 class="mb-2 text-base font-semibold text-[var(--aif-foreground)]">AI 帮我答</h3>
+            <p class="mb-4 text-xs leading-relaxed text-[var(--aif-muted-foreground)]">让 AI 基于当前问题和已有回答，为你生成一份可编辑的回答草稿。</p>
+            <button type="button" data-dom-id="btn-ai-draft" class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[var(--aif-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--aif-primary-foreground)] hover:bg-[var(--aif-primary-600)]">
+              <i data-lucide="wand-2" class="h-4 w-4"></i>
+              <span>生成回答草稿</span>
+            </button>
+            <div class="mt-4 space-y-3 border-t border-[var(--aif-border)] pt-4">
+              <div class="flex items-center gap-2 text-xs text-[var(--aif-muted-foreground)]">
+                <i data-lucide="shield-check" class="h-4 w-4 text-[var(--state-success)]"></i>
+                <span>本地匿名生成，不上传个人信息</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-[var(--aif-muted-foreground)]">
+                <i data-lucide="history" class="h-4 w-4 text-[var(--aif-primary)]"></i>
+                <span>生成历史仅保存在当前会话</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto w-full border-t border-[var(--aif-border)] bg-[var(--aif-card)] py-8">
+      <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-[var(--aif-muted-foreground)] sm:flex-row sm:px-6 lg:px-8">
+        <p>AI 辅助论坛 · 匿名问答社区</p>
+        <p>数据仅存储于本地，无后端 · 无账号</p>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        var nodeMap = {
+          'page-index': 'index.html',
+          'page-explore': 'explore.html',
+          'page-dashboard': 'dashboard.html',
+          'page-ask': 'ask.html',
+          'page-search': 'search.html',
+          'page-detail': 'detail.html'
+        };
+        function navigate(nodeId, hideEdge) {
+          var target = nodeMap[nodeId];
+          if (!target) return;
+          var qs = hideEdge ? '?hideEdge=true' : '';
+          window.location.href = target + qs;
+        }
+        document.querySelectorAll('[data-target-node]').forEach(function (el) {
+          el.addEventListener('click', function (e) {
+            var nodeId = el.getAttribute('data-target-node');
+            if (!nodeId) return;
+            e.preventDefault();
+            navigate(nodeId, el.getAttribute('data-hide-edge') === 'true');
+          });
+        });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据看板页</title>
+    <style id="theme-vars">
+/* AI 辅助论坛原型 · 品牌颜色与字体系统 */
+
+@font-face {
+  font-family: 'InstrumentSans';
+  src: url('assets/fonts/InstrumentSans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'InstrumentSans';
+  src: url('assets/fonts/InstrumentSans-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'GeistMono';
+  src: url('assets/fonts/GeistMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  /* Primary scale — derived from #5b6cff */
+  --aif-primary-50: #eef0ff;
+  --aif-primary-100: #d8dcff;
+  --aif-primary-200: #b6bdff;
+  --aif-primary-300: #8e95ff;
+  --aif-primary-400: #6c78ff;
+  --aif-primary-500: #5b6cff;
+  --aif-primary-600: #4a59e6;
+  --aif-primary-700: #3d49be;
+  --aif-primary-800: #333e9a;
+  --aif-primary-900: #2d3779;
+
+  /* Neutral scale — derived from #1c2333 */
+  --aif-neutral-50: #f6f7f9;
+  --aif-neutral-100: #eceef2;
+  --aif-neutral-200: #e4e8f1;
+  --aif-neutral-300: #cbd2e0;
+  --aif-neutral-400: #9ba4b8;
+  --aif-neutral-500: #697386;
+  --aif-neutral-600: #4b5366;
+  --aif-neutral-700: #353b4d;
+  --aif-neutral-800: #1c2333;
+  --aif-neutral-900: #111623;
+
+  /* Semantic aliases */
+  --aif-background: #f3f5fb;
+  --aif-foreground: #1c2333;
+  --aif-card: #ffffff;
+  --aif-card-foreground: #1c2333;
+  --aif-popover: #ffffff;
+  --aif-popover-foreground: #1c2333;
+  --aif-primary: #5b6cff;
+  --aif-primary-foreground: #ffffff;
+  --aif-muted: #f6f7f9;
+  --aif-muted-foreground: #697386;
+  --aif-border: #e4e8f1;
+  --aif-input: #e4e8f1;
+  --aif-ring: #5b6cff;
+
+  /* Radius */
+  --aif-radius-small: 4px;
+  --aif-radius-medium: 8px;
+  --aif-radius-large: 12px;
+
+  /* State colors */
+  --state-success: #14b585;
+  --state-success-bg: rgba(20, 181, 133, 0.10);
+  --state-warning: #e0822e;
+  --state-warning-bg: rgba(224, 130, 46, 0.10);
+  --state-error: #ef4444;
+  --state-error-bg: rgba(239, 68, 68, 0.10);
+  --state-info: #5b6cff;
+  --state-info-bg: rgba(91, 108, 255, 0.10);
+
+  /* Typography */
+  --aif-font-title: 'InstrumentSans', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --aif-font-body: 'InstrumentSans', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --aif-font-mono: 'GeistMono', 'SFMono-Regular', Consolas, monospace;
+
+  /* Legacy aliases for direct use */
+  --bg: #f3f5fb;
+  --bg2: #ffffff;
+  --ink: #1c2333;
+  --muted: #697386;
+  --rule: #e4e8f1;
+  --accent: #5b6cff;
+  --accent2: #14b585;
+  --warn: #e0822e;
+  --font: var(--aif-font-body);
+  --font-mono: var(--aif-font-mono);
+}
+
+/* Dark mode tokens */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --aif-background: #111623;
+    --aif-foreground: #f6f7f9;
+    --aif-card: #1c2333;
+    --aif-card-foreground: #f6f7f9;
+    --aif-popover: #1c2333;
+    --aif-popover-foreground: #f6f7f9;
+    --aif-muted: #353b4d;
+    --aif-muted-foreground: #9ba4b8;
+    --aif-border: #353b4d;
+    --aif-input: #353b4d;
+    --aif-ring: #8e95ff;
+
+    --bg: #111623;
+    --bg2: #1c2333;
+    --ink: #f6f7f9;
+    --muted: #9ba4b8;
+    --rule: #353b4d;
+  }
+}
+
+html.light {
+  --aif-background: #f3f5fb;
+  --aif-foreground: #1c2333;
+  --aif-card: #ffffff;
+  --aif-card-foreground: #1c2333;
+  --aif-popover: #ffffff;
+  --aif-popover-foreground: #1c2333;
+  --aif-muted: #f6f7f9;
+  --aif-muted-foreground: #697386;
+  --aif-border: #e4e8f1;
+  --aif-input: #e4e8f1;
+  --aif-ring: #5b6cff;
+
+  --bg: #f3f5fb;
+  --bg2: #ffffff;
+  --ink: #1c2333;
+  --muted: #697386;
+  --rule: #e4e8f1;
+}
+
+html.dark {
+  --aif-background: #111623;
+  --aif-foreground: #f6f7f9;
+  --aif-card: #1c2333;
+  --aif-card-foreground: #f6f7f9;
+  --aif-popover: #1c2333;
+  --aif-popover-foreground: #f6f7f9;
+  --aif-muted: #353b4d;
+  --aif-muted-foreground: #9ba4b8;
+  --aif-border: #353b4d;
+  --aif-input: #353b4d;
+  --aif-ring: #8e95ff;
+
+  --bg: #111623;
+  --bg2: #1c2333;
+  --ink: #f6f7f9;
+  --muted: #9ba4b8;
+  --rule: #353b4d;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--aif-background);
+    --color-foreground: var(--aif-foreground);
+    --color-card: var(--aif-card);
+    --color-card-foreground: var(--aif-card-foreground);
+    --color-popover: var(--aif-popover);
+    --color-popover-foreground: var(--aif-popover-foreground);
+    --color-primary: var(--aif-primary);
+    --color-primary-foreground: var(--aif-primary-foreground);
+    --color-muted: var(--aif-muted);
+    --color-muted-foreground: var(--aif-muted-foreground);
+    --color-border: var(--aif-border);
+    --color-input: var(--aif-input);
+    --color-ring: var(--aif-ring);
+    --color-accent: var(--accent);
+    --radius-sm: var(--aif-radius-small);
+    --radius-md: var(--aif-radius-medium);
+    --radius-lg: var(--aif-radius-large);
+  }
+  @layer base {
+    body { background: var(--aif-background); color: var(--aif-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--aif-background); }
+      .text-background { color: var(--aif-background); }
+      .border-background { border-color: var(--aif-background); }
+      .ring-background { --tw-ring-color: var(--aif-background); }
+      .bg-foreground { background-color: var(--aif-foreground); }
+      .text-foreground { color: var(--aif-foreground); }
+      .border-foreground { border-color: var(--aif-foreground); }
+      .ring-foreground { --tw-ring-color: var(--aif-foreground); }
+      .bg-card { background-color: var(--aif-card); }
+      .text-card { color: var(--aif-card); }
+      .border-card { border-color: var(--aif-card); }
+      .ring-card { --tw-ring-color: var(--aif-card); }
+      .bg-card-foreground { background-color: var(--aif-card-foreground); }
+      .text-card-foreground { color: var(--aif-card-foreground); }
+      .border-card-foreground { border-color: var(--aif-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--aif-card-foreground); }
+      .bg-popover { background-color: var(--aif-popover); }
+      .text-popover { color: var(--aif-popover); }
+      .border-popover { border-color: var(--aif-popover); }
+      .ring-popover { --tw-ring-color: var(--aif-popover); }
+      .bg-popover-foreground { background-color: var(--aif-popover-foreground); }
+      .text-popover-foreground { color: var(--aif-popover-foreground); }
+      .border-popover-foreground { border-color: var(--aif-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--aif-popover-foreground); }
+      .bg-primary { background-color: var(--aif-primary); }
+      .text-primary { color: var(--aif-primary); }
+      .border-primary { border-color: var(--aif-primary); }
+      .ring-primary { --tw-ring-color: var(--aif-primary); }
+      .bg-primary-foreground { background-color: var(--aif-primary-foreground); }
+      .text-primary-foreground { color: var(--aif-primary-foreground); }
+      .border-primary-foreground { border-color: var(--aif-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--aif-primary-foreground); }
+      .bg-muted { background-color: var(--aif-muted); }
+      .text-muted { color: var(--aif-muted); }
+      .border-muted { border-color: var(--aif-muted); }
+      .ring-muted { --tw-ring-color: var(--aif-muted); }
+      .bg-muted-foreground { background-color: var(--aif-muted-foreground); }
+      .text-muted-foreground { color: var(--aif-muted-foreground); }
+      .border-muted-foreground { border-color: var(--aif-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--aif-muted-foreground); }
+      .bg-border { background-color: var(--aif-border); }
+      .text-border { color: var(--aif-border); }
+      .border-border { border-color: var(--aif-border); }
+      .ring-border { --tw-ring-color: var(--aif-border); }
+      .bg-input { background-color: var(--aif-input); }
+      .text-input { color: var(--aif-input); }
+      .border-input { border-color: var(--aif-input); }
+      .ring-input { --tw-ring-color: var(--aif-input); }
+      .bg-ring { background-color: var(--aif-ring); }
+      .text-ring { color: var(--aif-ring); }
+      .border-ring { border-color: var(--aif-ring); }
+      .ring-ring { --tw-ring-color: var(--aif-ring); }
+      .bg-accent { background-color: var(--accent); }
+      .text-accent { color: var(--accent); }
+      .border-accent { border-color: var(--accent); }
+      .ring-accent { --tw-ring-color: var(--accent); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased flex flex-col">
+    <!-- Global top navigation -->
+    <header class="sticky top-0 z-50 w-full border-b border-[var(--aif-border)] bg-[var(--aif-card)]/80 backdrop-blur">
+        <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+            <a href="index.html" class="flex items-center gap-2 text-xl font-bold text-[var(--aif-foreground)]" data-dom-id="nav-home">
+                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--aif-primary)] text-[var(--aif-primary-foreground)]">
+                    <i data-lucide="messages-square" class="h-5 w-5"></i>
+                </span>
+                <span>AI 论坛</span>
+            </a>
+
+            <nav class="hidden items-center gap-1 md:flex">
+                <a href="index.html" data-nav-key="home" data-dom-id="nav-home" class="nav-item rounded-md px-3 py-2 text-sm font-medium text-[var(--aif-muted-foreground)] hover:bg-[var(--aif-muted)] hover:text-[var(--aif-foreground)]">首页</a>
+                <a href="explore.html" data-nav-key="explore" data-dom-id="nav-explore" class="nav-item rounded-md px-3 py-2 text-sm font-medium text-[var(--aif-muted-foreground)] hover:bg-[var(--aif-muted)] hover:text-[var(--aif-foreground)]">问题广场</a>
+                <a href="dashboard.html" data-nav-key="dashboard" data-dom-id="nav-dashboard" aria-current="page" class="nav-item rounded-md bg-primary/10 px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/15">数据看板</a>
+            </nav>
+
+            <div class="flex items-center gap-3">
+                <form class="relative hidden sm:block" onsubmit="return false;">
+                    <input type="text" placeholder="搜索问题…" class="h-9 w-64 rounded-md border border-[var(--aif-input)] bg-[var(--aif-muted)] px-3 pr-9 text-sm text-[var(--aif-foreground)] placeholder:text-[var(--aif-muted-foreground)] focus:border-[var(--aif-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--aif-ring)]/20" />
+                    <button type="submit" data-dom-id="search-submit" class="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-[var(--aif-muted-foreground)] hover:text-[var(--aif-foreground)]">
+                        <i data-lucide="search" class="h-4 w-4"></i>
+                    </button>
+                </form>
+                <a href="ask.html" data-dom-id="btn-ask" class="inline-flex items-center gap-1.5 rounded-md bg-[var(--aif-primary)] px-3 py-2 text-sm font-semibold text-[var(--aif-primary-foreground)] hover:bg-[var(--aif-primary-600)]">
+                    <i data-lucide="plus" class="h-4 w-4"></i>
+                    <span class="hidden sm:inline">提问</span>
+                </a>
+                <button class="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--aif-primary-300)] to-[var(--state-success)] text-xs font-bold text-white" data-dom-id="identity-chip" title="匿名身份">
+                    匿
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Page title region -->
+    <div class="mx-auto w-full max-w-6xl px-4 pt-6 sm:px-6 lg:px-8">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-[var(--aif-foreground)]">数据看板</h1>
+                <p class="text-sm text-[var(--aif-muted-foreground)]">本地匿名使用数据概览</p>
+            </div>
+            <a href="index.html" data-dom-id="btn-back" data-page-target="page-index" data-hide-edge="true" class="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--aif-muted-foreground)] hover:text-[var(--aif-primary)]">
+                <i data-lucide="arrow-left" class="h-4 w-4"></i>
+                返回首页
+            </a>
+        </div>
+    </div>
+
+    <!-- Main content region -->
+    <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <!-- Metrics grid -->
+        <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="核心指标">
+            <article class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm transition hover:shadow-md">
+                <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <i data-lucide="bot" class="h-5 w-5"></i>
+                </div>
+                <p class="text-sm font-medium text-[var(--aif-muted-foreground)]">AI 使用次数</p>
+                <p class="mt-1 text-3xl font-bold text-[var(--aif-foreground)]">24</p>
+            </article>
+            <article class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm transition hover:shadow-md">
+                <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <i data-lucide="file-text" class="h-5 w-5"></i>
+                </div>
+                <p class="text-sm font-medium text-[var(--aif-muted-foreground)]">AI 摘要生成</p>
+                <p class="mt-1 text-3xl font-bold text-[var(--aif-foreground)]">8</p>
+            </article>
+            <article class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm transition hover:shadow-md">
+                <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <i data-lucide="pen-tool" class="h-5 w-5"></i>
+                </div>
+                <p class="text-sm font-medium text-[var(--aif-muted-foreground)]">回答草稿</p>
+                <p class="mt-1 text-3xl font-bold text-[var(--aif-foreground)]">5</p>
+            </article>
+            <article class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm transition hover:shadow-md">
+                <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <i data-lucide="search" class="h-5 w-5"></i>
+                </div>
+                <p class="text-sm font-medium text-[var(--aif-muted-foreground)]">语义搜索</p>
+                <p class="mt-1 text-3xl font-bold text-[var(--aif-foreground)]">3</p>
+            </article>
+        </section>
+
+        <!-- Charts and feedback -->
+        <section class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3" aria-label="数据图表与反馈">
+            <article class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm lg:col-span-2">
+                <h2 class="mb-4 text-base font-semibold text-[var(--aif-foreground)]">AI 功能使用分布</h2>
+                <div class="relative h-64 w-full">
+                    <canvas id="featureChart" aria-label="AI 功能使用分布条形图"></canvas>
+                </div>
+            </article>
+
+            <article class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm">
+                <h2 class="mb-4 text-base font-semibold text-[var(--aif-foreground)]">用户反馈</h2>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-bold text-[var(--aif-foreground)]">78%</span>
+                    <span class="text-sm text-[var(--aif-muted-foreground)]">AI 摘要有帮助率</span>
+                </div>
+                <div class="mt-4">
+                    <div class="flex items-center justify-between text-xs text-[var(--aif-muted-foreground)]">
+                        <span>0%</span>
+                        <span>100%</span>
+                    </div>
+                    <div class="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-[var(--aif-muted)]">
+                        <div class="h-full rounded-full bg-[var(--aif-primary)] transition-all duration-700" style="width: 78%;"></div>
+                    </div>
+                </div>
+                <p class="mt-4 text-xs text-[var(--aif-muted-foreground)]">基于 8 次摘要生成后的本地反馈统计。</p>
+            </article>
+        </section>
+
+        <!-- Identity and actions -->
+        <section class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3" aria-label="匿名身份与数据操作">
+            <article class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm lg:col-span-2">
+                <h2 class="mb-4 text-base font-semibold text-[var(--aif-foreground)]">当前匿名身份</h2>
+                <div class="flex items-start gap-4 sm:items-center">
+                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--aif-primary-300)] to-[var(--state-success)] text-white shadow-sm">
+                        <i data-lucide="user" class="h-6 w-6"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-lg font-semibold text-[var(--aif-foreground)]">好奇的犀牛</p>
+                        <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--aif-muted-foreground)]">
+                            <span class="inline-flex items-center gap-1.5">
+                                <i data-lucide="fingerprint" class="h-3.5 w-3.5"></i>
+                                <code class="rounded bg-[var(--aif-muted)] px-1.5 py-0.5 font-mono text-xs text-[var(--aif-foreground)]">0x9a4f…e28c</code>
+                            </span>
+                            <span class="inline-flex items-center gap-1.5">
+                                <i data-lucide="calendar" class="h-3.5 w-3.5"></i>
+                                创建于 2025-03-12
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="rounded-lg border border-[var(--aif-border)] bg-[var(--aif-card)] p-5 shadow-sm">
+                <h2 class="mb-4 text-base font-semibold text-[var(--aif-foreground)]">数据操作</h2>
+                <div class="flex flex-col gap-3">
+                    <button type="button" class="inline-flex items-center justify-center gap-2 rounded-md border border-[var(--aif-border)] bg-[var(--aif-card)] px-4 py-2 text-sm font-medium text-[var(--aif-foreground)] hover:bg-[var(--aif-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--aif-ring)]/20">
+                        <i data-lucide="download" class="h-4 w-4"></i>
+                        导出数据
+                    </button>
+                    <button type="button" data-dom-id="btn-clear-data" class="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--state-error)] px-4 py-2 text-sm font-semibold text-[var(--aif-primary-foreground)] hover:bg-[var(--state-error)]/90 focus:outline-none focus:ring-2 focus:ring-[var(--state-error)]/30">
+                        <i data-lucide="trash-2" class="h-4 w-4"></i>
+                        清空所有本地数据
+                    </button>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto w-full border-t border-[var(--aif-border)] bg-[var(--aif-card)] py-8">
+        <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-[var(--aif-muted-foreground)] sm:flex-row sm:px-6 lg:px-8">
+            <p>AI 辅助论坛 · 匿名问答社区</p>
+            <p>数据仅存储于本地，无后端 · 无账号</p>
+        </div>
+    </footer>
+
+    <script>lucide.createIcons();</script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const rootStyle = getComputedStyle(document.documentElement);
+            const primary = rootStyle.getPropertyValue('--aif-primary').trim();
+            const muted = rootStyle.getPropertyValue('--aif-muted-foreground').trim();
+            const border = rootStyle.getPropertyValue('--aif-border').trim();
+            const card = rootStyle.getPropertyValue('--aif-card').trim();
+
+            const ctx = document.getElementById('featureChart');
+            if (ctx && typeof Chart !== 'undefined') {
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['润色', '摘要', '草稿', '搜索', '初始回答'],
+                        datasets: [{
+                            label: '调用次数',
+                            data: [4, 8, 5, 3, 4],
+                            backgroundColor: primary,
+                            borderColor: primary,
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: false }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: muted, font: { size: 12 } }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: '调用次数', color: muted, font: { size: 12 } },
+                                grid: { color: border },
+                                ticks: { color: muted, stepSize: 1, precision: 0 }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
