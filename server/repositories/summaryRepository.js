@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { query } from '../db/pool.js';
+import cacheService from '../services/cacheService.js';
 
 function mapSummary(row) {
   if (!row) return null;
@@ -29,6 +30,7 @@ async function upsertSummary(data) {
   const existing = await getByQuestion(data.questionId);
   const now = Date.now();
 
+  let summary;
   if (existing) {
     const result = await query(
       `UPDATE ai_summaries
@@ -48,29 +50,32 @@ async function upsertSummary(data) {
         existing.id,
       ]
     );
-    return mapSummary(result.rows[0]);
+    summary = mapSummary(result.rows[0]);
+  } else {
+    const id = crypto.randomUUID();
+    const result = await query(
+      `INSERT INTO ai_summaries
+        (id, question_id, content, source_answer_ids, citations, status,
+         generated_at, updated_at, feedback_count)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+       RETURNING *`,
+      [
+        id,
+        data.questionId,
+        data.content,
+        data.sourceAnswerIds || [],
+        JSON.stringify(data.citations || []),
+        data.status || 'stable',
+        now,
+        now,
+        JSON.stringify({ helpful: 0, needsUpdate: 0, inaccurate: 0 }),
+      ]
+    );
+    summary = mapSummary(result.rows[0]);
   }
 
-  const id = crypto.randomUUID();
-  const result = await query(
-    `INSERT INTO ai_summaries
-      (id, question_id, content, source_answer_ids, citations, status,
-       generated_at, updated_at, feedback_count)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-     RETURNING *`,
-    [
-      id,
-      data.questionId,
-      data.content,
-      data.sourceAnswerIds || [],
-      JSON.stringify(data.citations || []),
-      data.status || 'stable',
-      now,
-      now,
-      JSON.stringify({ helpful: 0, needsUpdate: 0, inaccurate: 0 }),
-    ]
-  );
-  return mapSummary(result.rows[0]);
+  await cacheService.del(`q:${data.questionId}`);
+  return summary;
 }
 
 export { getByQuestion, upsertSummary };

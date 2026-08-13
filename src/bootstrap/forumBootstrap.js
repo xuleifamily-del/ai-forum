@@ -28,12 +28,14 @@ export async function runForumBootstrap() {
   }
 
   let dbAvailable = false
+  let redisAvailable = false
   try {
     const health = await checkHealth()
     dbAvailable = !!health?.db
+    redisAvailable = !!health?.redis
   } catch (err) {
     console.warn('[Bootstrap] API health check failed:', err.message)
   }
 
-  return { identity, behaviorProfile, aiAvailable: true, dbAvailable }
+  return { identity, behaviorProfile, aiAvailable: true, dbAvailable, redisAvailable }
 }

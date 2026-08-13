@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
 import { isDbAvailable } from './db/pool.js';
+import { isRedisAvailable } from './db/redis.js';
 import questionsRouter from './routes/questions.js';
 import answersRouter from './routes/answers.js';
 import summariesRouter from './routes/summaries.js';
@@ -13,9 +14,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.use(express.json({ limit: '2mb' }));
 
-// Health check (always available, reflects DB state).
+// Health check (always available, reflects DB + Redis state).
 app.get('/api/health', (req, res) => {
-  res.json({ status: isDbAvailable ? 'ok' : 'degraded', db: isDbAvailable });
+  const status = isDbAvailable && isRedisAvailable ? 'ok' : 'degraded';
+  res.json({ status, db: isDbAvailable, redis: isRedisAvailable });
 });
 
 // When the database is unavailable, reject all other /api data routes with 503.
@@ -63,7 +65,8 @@ if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(
       `[server] ai-forum API listening on http://localhost:${PORT} ` +
-        `(db: ${isDbAvailable ? 'connected' : 'unavailable/degraded'})`
+        `(db: ${isDbAvailable ? 'connected' : 'unavailable/degraded'}, ` +
+        `redis: ${isRedisAvailable ? 'connected' : 'unavailable/caching-disabled'})`
     );
   });
 }

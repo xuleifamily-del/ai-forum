@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { query } from '../db/pool.js';
+import cacheService from '../services/cacheService.js';
 
 function mapAnswer(row) {
   if (!row) return null;
@@ -55,6 +56,7 @@ async function createAnswer(data) {
     'UPDATE questions SET answer_count = answer_count + 1 WHERE id = $1',
     [data.questionId]
   );
+  await cacheService.del(`q:${data.questionId}`);
   return mapAnswer(result.rows[0]);
 }
 

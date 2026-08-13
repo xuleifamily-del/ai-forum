@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { query } from '../db/pool.js';
+import cacheService from '../services/cacheService.js';
 
 function mapQuestion(row) {
   if (!row) return null;
@@ -26,6 +27,10 @@ async function listQuestions({ sort = 'latest', limit = 20, offset = 0, tag } = 
   const numericLimit = Number(limit) || 20;
   const numericOffset = Number(offset) || 0;
 
+  const cacheKey = `qlist:${sort}:${tag || 'all'}:${numericLimit}:${numericOffset}`;
+  const cached = await cacheService.get(cacheKey);
+  if (cached) return cached;
+
   const whereClause = tag ? 'WHERE $1 = ANY(tags)' : '';
   const params = tag ? [tag] : [];
 
@@ -47,12 +52,22 @@ async function listQuestions({ sort = 'latest', limit = 20, offset = 0, tag } = 
 
   const listResult = await query(listSql, listParams);
   const items = listResult.rows.map(mapQuestion);
-  return { items, total };
+  const result = { items, total };
+  await cacheService.set(cacheKey, result, 60);
+  return result;
 }
 
 async function getQuestionById(id) {
+  const cacheKey = `q:${id}`;
+  const cached = await cacheService.get(cacheKey);
+  if (cached !== null) return cached;
+
   const qResult = await query('SELECT * FROM questions WHERE id = $1', [id]);
-  if (qResult.rows.length === 0) return null;
+  if (qResult.rows.length === 0) {
+    // Cache null result with short TTL to prevent cache penetration.
+    await cacheService.set(cacheKey, null, 30);
+    return null;
+  }
   const question = mapQuestion(qResult.rows[0]);
 
   const answersResult = await query(
@@ -95,6 +110,7 @@ async function getQuestionById(id) {
     question.aiSummary = null;
   }
 
+  await cacheService.set(cacheKey, question, 300);
   return question;
 }
 
@@ -126,7 +142,9 @@ async function createQuestion(data) {
       now,
     ]
   );
-  return mapQuestion(result.rows[0]);
+  const question = mapQuestion(result.rows[0]);
+  await cacheService.delByPattern('qlist:*');
+  return question;
 }
 
 async function incrementView(id) {
