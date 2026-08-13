@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
-import { isDbAvailable } from './db/pool.js';
+import { isDbAvailable, verifyConnection } from './db/pool.js';
 import { isRedisAvailable } from './db/redis.js';
 import questionsRouter from './routes/questions.js';
 import answersRouter from './routes/answers.js';
@@ -56,19 +56,33 @@ if (!isDev) {
 // Centralized error handler.
 app.use((err, req, res, next) => {
   console.error('[server] Error:', err.message);
+  if (err.message?.includes('connect') || err.message?.includes('timeout')) {
+    return res.status(503).json({ error: 'database connection failed' });
+  }
   res.status(500).json({ error: 'internal server error' });
 });
 
 const PORT = process.env.PORT || 5175;
 
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(
-      `[server] ai-forum API listening on http://localhost:${PORT} ` +
-        `(db: ${isDbAvailable ? 'connected' : 'unavailable/degraded'}, ` +
-        `redis: ${isRedisAvailable ? 'connected' : 'unavailable/caching-disabled'})`
-    );
-  });
+  (async () => {
+    if (process.env.DATABASE_URL) {
+      const ok = await verifyConnection();
+      if (ok) {
+        console.log('[server] Database connection verified successfully.');
+      } else {
+        console.warn('[server] Database connection verification failed. Starting in degraded mode.');
+      }
+    }
+
+    app.listen(PORT, () => {
+      console.log(
+        `[server] ai-forum API listening on http://localhost:${PORT} ` +
+          `(db: ${isDbAvailable ? 'connected' : 'unavailable/degraded'}, ` +
+          `redis: ${isRedisAvailable ? 'connected' : 'unavailable/caching-disabled'})`
+      );
+    });
+  })();
 }
 
 export default app;
