@@ -59,3 +59,10 @@ CREATE TABLE IF NOT EXISTS feedback (
 CREATE INDEX IF NOT EXISTS idx_answers_question_id ON answers(question_id);
 CREATE INDEX IF NOT EXISTS idx_ai_summaries_question_id ON ai_summaries(question_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_target_id ON feedback(target_id);
+
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY,
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at BIGINT NOT NULL
+);

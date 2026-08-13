@@ -3,6 +3,8 @@
  * 所有请求基础路径为 /api（开发环境由 Vite 代理转发到后端）。
  */
 
+import authService from './authService.js';
+
 const BASE_URL = '/api';
 
 async function request(method, path, { body, query } = {}) {
@@ -25,6 +27,11 @@ async function request(method, path, { body, query } = {}) {
   if (body !== undefined && body !== null) {
     options.headers['Content-Type'] = 'application/json';
     options.body = JSON.stringify(body);
+  }
+
+  const token = authService.getToken();
+  if (token) {
+    options.headers['Authorization'] = `Bearer ${token}`;
   }
 
   let res;

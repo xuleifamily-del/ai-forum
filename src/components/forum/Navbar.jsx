@@ -1,11 +1,13 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { MessagesSquare, Search, Plus } from 'lucide-react'
+import { MessagesSquare, Search, Plus, LogOut } from 'lucide-react'
 import { useState } from 'react'
+import { useForumApp } from '../../contexts/ForumAppContext.jsx'
 
 export default function Navbar({ active = 'home', identityAvatarStyle, avatarText, identityNickname }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
+  const { user, logout } = useForumApp()
 
   const navItems = [
     { key: 'home', label: '首页', path: '/' },
@@ -84,6 +86,36 @@ export default function Navbar({ active = 'home', identityAvatarStyle, avatarTex
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">提问</span>
           </Link>
+
+          {/* 登录/注册/用户 */}
+          {user ? (
+            <div className="flex items-center gap-2">
+              <span className="hidden text-sm font-medium text-aif-foreground sm:inline">{user.username}</span>
+              <button
+                type="button"
+                onClick={logout}
+                className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-2 text-sm font-medium text-aif-foreground hover:bg-aif-muted transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">退出</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-2 text-sm font-semibold text-aif-foreground hover:bg-aif-muted transition-colors"
+              >
+                登录
+              </Link>
+              <Link
+                to="/register"
+                className="inline-flex items-center gap-1.5 rounded-md bg-aif-primary px-3 py-2 text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors"
+              >
+                注册
+              </Link>
+            </div>
+          )}
 
           {/* 匿名身份 */}
           <button

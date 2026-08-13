@@ -1,8 +1,18 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { runForumBootstrap } from '../bootstrap/forumBootstrap.js'
 import IdentityService from '../services/identityService.js'
+import authService from '../services/authService.js'
 
 export const ForumAppContext = createContext(null)
+
+function decodeJwtPayload(token) {
+  try {
+    const payload = token.split('.')[1];
+    return JSON.parse(atob(payload));
+  } catch {
+    return null;
+  }
+}
 
 export function ForumAppProvider({ children }) {
   const [identity, setIdentity] = useState(null)
@@ -11,6 +21,7 @@ export function ForumAppProvider({ children }) {
   const [dbAvailable, setDbAvailable] = useState(false)
   const [redisAvailable, setRedisAvailable] = useState(false)
   const [bootstrapping, setBootstrapping] = useState(true)
+  const [user, setUser] = useState(null)
 
   const bootstrap = useCallback(async () => {
     setBootstrapping(true)
@@ -19,6 +30,15 @@ export function ForumAppProvider({ children }) {
     setBehaviorProfile(res.behaviorProfile)
     setDbAvailable(res.dbAvailable)
     setRedisAvailable(res.redisAvailable)
+
+    const token = authService.getToken();
+    if (token) {
+      const payload = decodeJwtPayload(token);
+      if (payload) {
+        setUser({ id: payload.id, username: payload.username });
+      }
+    }
+
     setBootstrapping(false)
   }, [])
 
@@ -26,6 +46,23 @@ export function ForumAppProvider({ children }) {
     IdentityService.reset()
     return bootstrap()
   }, [bootstrap])
+
+  const login = useCallback(async (username, password) => {
+    const data = await authService.login(username, password);
+    setUser(data.user);
+    return data;
+  }, [])
+
+  const register = useCallback(async (username, password) => {
+    const data = await authService.register(username, password);
+    setUser(data.user);
+    return data;
+  }, [])
+
+  const logout = useCallback(() => {
+    authService.removeToken();
+    setUser(null);
+  }, [])
 
   useEffect(() => {
     bootstrap()
@@ -40,7 +77,7 @@ export function ForumAppProvider({ children }) {
   }
 
   return (
-    <ForumAppContext.Provider value={{ identity, behaviorProfile, aiAvailable, dbAvailable, redisAvailable, refreshIdentity }}>
+    <ForumAppContext.Provider value={{ identity, behaviorProfile, aiAvailable, dbAvailable, redisAvailable, refreshIdentity, user, login, register, logout }}>
       {children}
     </ForumAppContext.Provider>
   )

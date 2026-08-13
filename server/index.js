@@ -15,6 +15,7 @@ import questionsRouter from './routes/questions.js';
 import answersRouter from './routes/answers.js';
 import summariesRouter from './routes/summaries.js';
 import feedbackRouter from './routes/feedback.js';
+import authRouter from './routes/auth.js';
 import {
   seedQuestions,
   seedAnswers,
@@ -31,6 +32,8 @@ app.get('/api/health', (req, res) => {
   const status = isDbAvailable && isRedisAvailable ? 'ok' : 'degraded';
   res.json({ status, db: isDbAvailable, redis: isRedisAvailable });
 });
+
+app.use('/api/auth', authRouter);
 
 // When the database is unavailable, reject all other /api data routes with 503.
 app.use('/api', (req, res, next) => {

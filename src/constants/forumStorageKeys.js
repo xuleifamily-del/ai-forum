@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   FEEDBACK: 'aiforum_feedback',
   SEED_DATA: 'aiforum_seed',
   SCHEMA_VERSION: 'aiforum_schema_v',
+  AUTH_TOKEN: 'aiforum_auth_token',
 };
 
 export const SCHEMA_CURRENT_VERSION = 1;
