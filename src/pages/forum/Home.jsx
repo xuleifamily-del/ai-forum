@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Edit3, Compass, Eye, MessageCircle, Clock, Sparkles, PenTool, Search } from 'lucide-react'
-import { recommendedQuestions, aiFeatures } from './mockData.js'
+import { aiFeatures } from './mockData.js'
+import { fetchQuestions } from '../../services/questionRepository.js'
 
 function TagBadge({ text, color }) {
   const colors = {
@@ -63,7 +65,66 @@ function FeatureCard({ f }) {
   )
 }
 
+function timeAgo(ts) {
+  const diff = Date.now() - ts
+  const min = Math.floor(diff / 60000)
+  if (min < 1) return '刚刚'
+  if (min < 60) return `${min} 分钟前`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr} 小时前`
+  const day = Math.floor(hr / 24)
+  if (day < 30) return `${day} 天前`
+  const mo = Math.floor(day / 30)
+  return `${mo} 个月前`
+}
+
+function stripMarkdown(md) {
+  return String(md || '')
+    .replace(/`{1,3}[^`]*`{1,3}/g, '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_~]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function mapQuestionForCard(q) {
+  const plain = stripMarkdown(q.body)
+  const excerpt = plain.length > 120 ? plain.slice(0, 120) + '…' : plain
+  const tags = (q.tags || []).slice(0, 2).map((t) => ({ text: t, color: 'primary' }))
+  return {
+    id: q.id,
+    title: q.title,
+    excerpt,
+    tags,
+    views: q.viewCount,
+    answers: q.answerCount,
+    createdAt: timeAgo(q.createdAt),
+  }
+}
+
 export default function Home() {
+  const [questions, setQuestions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  async function loadQuestions() {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetchQuestions({ sort: 'hot', limit: 6 })
+      setQuestions(res.items)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadQuestions()
+  }, [])
+
   return (
     <>
       <section className="relative overflow-hidden rounded-2xl border border-aif-border bg-aif-card p-8 sm:p-12" data-dom-id="hero-section">
@@ -107,9 +168,21 @@ export default function Home() {
           </Link>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-          {recommendedQuestions.map((q) => (
-            <QuestionCard key={q.id} q={q} />
-          ))}
+          {loading ? (
+            <div className="text-center py-12 text-aif-muted-foreground">加载中…</div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-aif-error">加载失败，请稍后重试</p>
+              <button
+                onClick={loadQuestions}
+                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-aif-primary px-4 py-2 text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors"
+              >
+                重试
+              </button>
+            </div>
+          ) : (
+            questions.map((q) => <QuestionCard key={q.id} q={mapQuestionForCard(q)} />)
+          )}
         </div>
       </section>
 

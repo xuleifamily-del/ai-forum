@@ -1,0 +1,7 @@
+{
+  "output_dir": "dist",
+  "build_command": "npm run build",
+  "install_command": "npm install",
+  "cache_dependencies": true,
+  "start_command": "node server/index.js"
+}

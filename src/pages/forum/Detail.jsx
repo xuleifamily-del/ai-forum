@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -11,25 +11,58 @@ import {
   MessageCircle,
   Send,
   Wand2,
-  Copy,
   User,
 } from 'lucide-react'
-import { questionDetail } from './mockData.js'
+import { fetchQuestionDetail, incrementView, createAnswer } from '../../services/questionRepository.js'
+import { useForumApp } from '../../contexts/ForumAppContext.jsx'
+
+function timeAgo(ts) {
+  if (!ts) return ''
+  const diff = Date.now() - ts
+  const sec = Math.floor(diff / 1000)
+  if (sec < 60) return '刚刚'
+  const min = Math.floor(sec / 60)
+  if (min < 60) return `${min} 分钟前`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr} 小时前`
+  const day = Math.floor(hr / 24)
+  if (day < 30) return `${day} 天前`
+  const month = Math.floor(day / 30)
+  if (month < 12) return `${month} 个月前`
+  const year = Math.floor(month / 12)
+  return `${year} 年前`
+}
 
 export default function Detail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { identity } = useForumApp()
+  const [question, setQuestion] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [answer, setAnswer] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
-  const [copied, setCopied] = useState(false)
 
-  const q = questionDetail
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(q.codeSnippet)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
+  const loadQuestion = async () => {
+    try {
+      const res = await fetchQuestionDetail(id)
+      if (!res) {
+        setError('问题不存在')
+      } else {
+        setQuestion(res)
+      }
+    } catch (err) {
+      setError(err?.message || '加载失败')
+    } finally {
+      setLoading(false)
+    }
   }
+
+  useEffect(() => {
+    loadQuestion()
+    incrementView(id).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   const handleAiAnswer = () => {
     setIsGenerating(true)
@@ -37,6 +70,44 @@ export default function Detail() {
       setAnswer('根据问题分析，这通常是因为依赖中的对象引用不稳定导致的。建议：\n1. 在父组件用 useMemo 包装 filter 对象\n2. 或使用自定义 useDeepCompareEffect hook 做深度比较\n3. 检查 React 18 StrictMode 的双调用是否影响判断')
       setIsGenerating(false)
     }, 800)
+  }
+
+  const handlePublishAnswer = async () => {
+    if (!answer.trim() || !identity) return
+    try {
+      const newAnswer = await createAnswer(id, {
+        content: answer,
+        authorId: identity.id,
+        authorName: identity.nickname,
+        authorAvatarSeed: identity.avatarSeed,
+        isAi: false,
+      })
+      setQuestion(prev => prev ? { ...prev, answers: [...prev.answers, newAnswer], answerCount: prev.answerCount + 1 } : prev)
+      setAnswer('')
+    } catch (err) {
+      alert('发布失败：' + err.message)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="text-center py-20 text-aif-muted-foreground">加载中…</div>
+    )
+  }
+
+  if (error || !question) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-20 text-center">
+        <p className="text-aif-muted-foreground">{error || '问题不存在'}</p>
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 rounded-md bg-aif-primary px-4 py-2 text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          返回首页
+        </Link>
+      </div>
+    )
   }
 
   return (
@@ -56,178 +127,121 @@ export default function Detail() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
-          <section className="rounded-lg border border-aif-border bg-aif-card p-5 shadow-sm" aria-label="AI 摘要">
-            <div className="border-l-4 border-aif-primary pl-4">
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-aif-primary px-2.5 py-0.5 text-xs font-semibold text-aif-primary-foreground">
-                  AI 摘要
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-aif-success-bg px-2.5 py-0.5 text-xs font-medium text-aif-success">
-                  <CheckCircle2 className="h-3 w-3" />
-                  <span>状态稳定</span>
-                </span>
+          {question.aiSummary && (
+            <section className="rounded-lg border border-aif-border bg-aif-card p-5 shadow-sm" aria-label="AI 摘要">
+              <div className="border-l-4 border-aif-primary pl-4">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center rounded-full bg-aif-primary px-2.5 py-0.5 text-xs font-semibold text-aif-primary-foreground">
+                    AI 摘要
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-aif-success-bg px-2.5 py-0.5 text-xs font-medium text-aif-success">
+                    <CheckCircle2 className="h-3 w-3" />
+                    <span>{question.aiSummary.status || '已生成'}</span>
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed text-aif-card-foreground">
+                  {question.aiSummary.content}
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-muted px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-border transition-colors"
+                  >
+                    <ThumbsUp className="h-3.5 w-3.5" />
+                    <span>有帮助</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-muted px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-border transition-colors"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    <span>需更新</span>
+                  </button>
+                </div>
               </div>
-              <p className="text-sm leading-relaxed text-aif-card-foreground">
-                {q.aiSummary.split(/(\[.\])/g).map((part, i) => {
-                  const m = part.match(/^\[(\d)\]$/)
-                  if (m) {
-                    return (
-                      <a
-                        key={i}
-                        href={`#ref-${m[1]}`}
-                        className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded bg-aif-primary-100 px-1 text-xs font-semibold text-aif-primary-700 hover:underline mx-0.5"
-                      >
-                        [{m[1]}]
-                      </a>
-                    )
-                  }
-                  const withCode = part.split(/(useMemo|useCallback|eslint-plugin-react-hooks|exhaustive-deps)/g).map((seg, j) => {
-                    if (['useMemo', 'useCallback', 'eslint-plugin-react-hooks', 'exhaustive-deps'].includes(seg)) {
-                      return (
-                        <code
-                          key={j}
-                          className="rounded bg-aif-muted px-1 py-0.5 font-aif-mono text-xs"
-                        >
-                          {seg}
-                        </code>
-                      )
-                    }
-                    return <span key={j}>{seg}</span>
-                  })
-                  return <span key={i}>{withCode}</span>
-                })}
-              </p>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-muted px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-border transition-colors"
-                >
-                  <ThumbsUp className="h-3.5 w-3.5" />
-                  <span>有帮助</span>
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-muted px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-border transition-colors"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  <span>需更新</span>
-                </button>
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           <article className="rounded-lg border border-aif-border bg-aif-card p-5 shadow-sm">
             <h1 className="text-xl font-bold leading-snug text-aif-foreground sm:text-2xl">
-              {q.title}
+              {question.title}
             </h1>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {q.tags.map((t) => (
-                <span
-                  key={t}
-                  className="rounded-md bg-aif-primary-50 px-2 py-0.5 text-xs font-medium text-aif-primary-700"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
+            {question.tags?.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {question.tags.map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-md bg-aif-primary-50 px-2 py-0.5 text-xs font-medium text-aif-primary-700"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="mt-5 space-y-4 text-aif-card-foreground">
-              {q.content.split('\n\n').map((p, i) => (
+              {question.body?.split('\n\n').map((p, i) => (
                 <p key={i} className="leading-relaxed whitespace-pre-line">
-                  {p.includes('useEffect') || p.includes('useState') ? (
-                    p.split(/(useEffect|useState|filter|setFilter)/g).map((seg, j) => {
-                      if (['useEffect', 'useState', 'filter', 'setFilter'].includes(seg)) {
-                        return (
-                          <code
-                            key={j}
-                            className="rounded bg-aif-muted px-1 py-0.5 font-aif-mono text-sm"
-                          >
-                            {seg}
-                          </code>
-                        )
-                      }
-                      return <span key={j}>{seg}</span>
-                    })
-                  ) : (
-                    p
-                  )}
+                  {p}
                 </p>
               ))}
-
-              <div className="overflow-hidden rounded-lg border border-aif-border bg-aif-muted">
-                <div className="flex items-center justify-between border-b border-aif-border bg-aif-muted px-4 py-2">
-                  <span className="text-xs font-medium text-aif-muted-foreground">示例代码</span>
-                  <button
-                    type="button"
-                    onClick={handleCopy}
-                    className="text-xs font-medium text-aif-muted-foreground hover:text-aif-primary transition-colors"
-                  >
-                    {copied ? '已复制' : '复制'}
-                  </button>
-                </div>
-                <pre className="overflow-x-auto p-4 text-sm leading-relaxed font-aif-mono">
-                  <code className="text-aif-foreground">{q.codeSnippet}</code>
-                </pre>
-              </div>
             </div>
             <div className="mt-6 flex flex-wrap items-center gap-4 border-t border-aif-border pt-4 text-xs text-aif-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <Eye className="h-3.5 w-3.5" />
-                <span>{q.views.toLocaleString()} 次浏览</span>
+                <span>{(question.viewCount || 0).toLocaleString()} 次浏览</span>
               </span>
               <span className="inline-flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5" />
-                <span>发布于 {q.createdAt}</span>
+                <span>发布于 {timeAgo(question.createdAt)}</span>
               </span>
             </div>
           </article>
 
           <section className="flex flex-col gap-4" aria-label="回答列表">
-            <h2 className="text-lg font-bold text-aif-foreground">{q.answers.length} 个回答</h2>
+            <h2 className="text-lg font-bold text-aif-foreground">{question.answers?.length || 0} 个回答</h2>
 
-            {q.answers.map((a) => (
-              <article
-                key={a.id}
-                className={`relative rounded-lg border p-5 shadow-sm ${
-                  a.type === 'ai'
-                    ? 'border-aif-primary-200 bg-aif-primary-50'
-                    : 'border-aif-border bg-aif-card'
-                }`}
-              >
-                <div className="mb-3 flex items-center gap-2">
-                  {a.type === 'ai' ? (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-aif-primary px-2 py-1 text-xs font-semibold text-aif-primary-foreground">
-                      <Sparkles className="h-3 w-3" />
-                      {a.title}
-                    </span>
-                  ) : (
-                    <div className="inline-flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-aif-primary-300 to-aif-success text-white">
-                        <User className="h-3.5 w-3.5" />
-                      </div>
-                      <span className="text-xs font-medium text-aif-foreground">{a.author}</span>
-                    </div>
-                  )}
-                  <span className="ml-auto text-xs text-aif-muted-foreground">{a.createdAt}</span>
-                </div>
-                <p className="text-sm leading-relaxed text-aif-card-foreground">{a.content}</p>
-                <div className="mt-4 flex items-center gap-4">
-                  {a.type === 'ai' ? (
-                    a.helpful ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-aif-success-bg px-2.5 py-0.5 text-xs font-medium text-aif-success">
-                        <CheckCircle2 className="h-3 w-3" /> 已采用为草稿
+            {(question.answers || []).map((a) => {
+              const isAi = !!a.isAI
+              const authorName = isAi ? 'AI 助手' : a.authorName
+              return (
+                <article
+                  key={a.id}
+                  className={`relative rounded-lg border p-5 shadow-sm ${
+                    isAi
+                      ? 'border-aif-primary-200 bg-aif-primary-50'
+                      : 'border-aif-border bg-aif-card'
+                  }`}
+                >
+                  <div className="mb-3 flex items-center gap-2">
+                    {isAi ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-aif-primary px-2 py-1 text-xs font-semibold text-aif-primary-foreground">
+                        <Sparkles className="h-3 w-3" />
+                        {authorName}
                       </span>
-                    ) : null
-                  ) : (
+                    ) : (
+                      <div className="inline-flex items-center gap-2">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-aif-primary-300 to-aif-success text-white">
+                          <User className="h-3.5 w-3.5" />
+                        </div>
+                        <span className="text-xs font-medium text-aif-foreground">{authorName}</span>
+                      </div>
+                    )}
+                    <span className="ml-auto text-xs text-aif-muted-foreground">{timeAgo(a.createdAt)}</span>
+                  </div>
+                  <p className="text-sm leading-relaxed text-aif-card-foreground">{a.content}</p>
+                  <div className="mt-4 flex items-center gap-4">
+                    {!isAi && (
+                      <button className="inline-flex items-center gap-1 text-xs text-aif-muted-foreground hover:text-aif-primary transition-colors">
+                        <ThumbsUp className="h-3.5 w-3.5" /> {a.upvotes || 0}
+                      </button>
+                    )}
                     <button className="inline-flex items-center gap-1 text-xs text-aif-muted-foreground hover:text-aif-primary transition-colors">
-                      <ThumbsUp className="h-3.5 w-3.5" /> {a.likes}
+                      <MessageCircle className="h-3.5 w-3.5" /> 回复
                     </button>
-                  )}
-                  <button className="inline-flex items-center gap-1 text-xs text-aif-muted-foreground hover:text-aif-primary transition-colors">
-                    <MessageCircle className="h-3.5 w-3.5" /> 回复
-                  </button>
-                </div>
-              </article>
-            ))}
+                  </div>
+                </article>
+              )
+            })}
           </section>
 
           <section className="rounded-lg border border-aif-border bg-aif-card p-5 shadow-sm">
@@ -269,6 +283,7 @@ export default function Detail() {
               </button>
               <button
                 type="button"
+                onClick={handlePublishAnswer}
                 disabled={!answer.trim()}
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-aif-primary px-5 py-2.5 text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -301,7 +316,7 @@ export default function Detail() {
             </div>
             <div className="mt-6 border-t border-aif-border pt-4">
               <p className="text-xs text-aif-muted-foreground">
-                数据保存在本地 localStorage。点击导航栏右上角身份芯片可切换/清空匿名身份。
+                数据持久化于 PostgreSQL + 本地 localStorage。点击导航栏右上角身份芯片可切换/清空匿名身份。
               </p>
             </div>
           </div>

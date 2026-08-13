@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { createQuestion } from '../../services/questionRepository.js'
+import { useForumApp } from '../../contexts/ForumAppContext.jsx'
 import {
   Sparkles,
   Wand2,
@@ -39,12 +41,14 @@ const tips = [
 
 export default function Ask() {
   const navigate = useNavigate()
+  const { identity } = useForumApp()
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [tags, setTags] = useState([])
   const [tagInput, setTagInput] = useState('')
   const [showPolishHint, setShowPolishHint] = useState(false)
   const [aiLoading, setAiLoading] = useState(null)
+  const [publishing, setPublishing] = useState(false)
 
   const handleTagKey = (e) => {
     if (e.key === 'Enter' || e.key === ',') {
@@ -64,9 +68,25 @@ export default function Ask() {
     if (tags.length < 5 && !tags.includes(t)) setTags([...tags, t])
   }
 
-  const handlePublish = () => {
-    if (!title.trim() || !body.trim()) return
-    navigate('/detail/new')
+  const handlePublish = async () => {
+    if (!title.trim() || !body.trim() || !identity) return
+    setPublishing(true)
+    try {
+      const question = await createQuestion({
+        title: title.trim(),
+        body: body.trim(),
+        tags,
+        authorId: identity.id,
+        authorName: identity.nickname,
+        authorAvatarSeed: identity.avatarSeed,
+        aiAssisted: false,
+      })
+      navigate(`/detail/${question.id}`)
+    } catch (err) {
+      alert('发布失败：' + err.message)
+    } finally {
+      setPublishing(false)
+    }
   }
 
   const mockAiAction = (type, target) => {
@@ -242,11 +262,11 @@ export default function Ask() {
             <button
               type="button"
               onClick={handlePublish}
-              disabled={!title.trim() || !body.trim()}
+              disabled={!title.trim() || !body.trim() || publishing}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-aif-primary px-5 py-2.5 text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="h-4 w-4" />
-              发布问题
+              {publishing ? '发布中…' : '发布问题'}
             </button>
           </div>
         </section>

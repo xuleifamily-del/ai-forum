@@ -1,7 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Eye, MessageCircle, ThumbsUp, Clock } from 'lucide-react'
-import { exploreQuestions } from './mockData.js'
+import { fetchQuestions } from '../../services/questionRepository.js'
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts
+  const min = Math.floor(diff / 60000)
+  if (min < 1) return '刚刚'
+  if (min < 60) return `${min} 分钟前`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr} 小时前`
+  const day = Math.floor(hr / 24)
+  if (day < 30) return `${day} 天前`
+  const mo = Math.floor(day / 30)
+  return `${mo} 个月前`
+}
 
 function TagBadge({ text, color }) {
   const colors = {
@@ -51,11 +64,49 @@ function QuestionCard({ q }) {
 
 export default function Explore() {
   const [sort, setSort] = useState('latest')
+  const [questions, setQuestions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const sorted = [...exploreQuestions].sort((a, b) => {
-    if (sort === 'hot') return b.hot - a.hot
-    return 0
-  })
+  const loadQuestions = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetchQuestions({ sort, limit: 20 })
+      setQuestions(res.items)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [sort])
+
+  useEffect(() => {
+    loadQuestions()
+  }, [loadQuestions])
+
+  const mapQuestionForCard = (q) => {
+    const stripped = (q.body || '')
+      .replace(/\*\*/g, '')
+      .replace(/`/g, '')
+      .replace(/^#+\s*/gm, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/[*_~>]/g, '')
+      .replace(/\n+/g, ' ')
+      .trim()
+    const excerpt = stripped.length > 140 ? stripped.slice(0, 140) + '…' : stripped
+    return {
+      id: q.id,
+      title: q.title,
+      excerpt,
+      tags: (q.tags || []).slice(0, 3).map((t) => ({ text: t, color: 'primary' })),
+      views: q.viewCount,
+      answers: q.answerCount,
+      likes: q.viewCount,
+      createdAt: timeAgo(q.createdAt),
+      hot: q.viewCount,
+    }
+  }
 
   return (
     <>
@@ -97,8 +148,23 @@ export default function Explore() {
       </section>
 
       <div className="flex flex-col gap-4">
-        {sorted.map((q) => (
-          <QuestionCard key={q.id} q={q} />
+        {loading && (
+          <div className="text-center py-12 text-aif-muted-foreground">加载中…</div>
+        )}
+        {error && (
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <p className="text-sm text-aif-error">加载失败：{error.message || '未知错误'}</p>
+            <button
+              type="button"
+              onClick={loadQuestions}
+              className="inline-flex items-center rounded-md bg-aif-primary px-4 py-1.5 text-sm font-medium text-white hover:bg-aif-primary-600"
+            >
+              重试
+            </button>
+          </div>
+        )}
+        {!loading && !error && questions.map((q) => (
+          <QuestionCard key={q.id} q={mapQuestionForCard(q)} />
         ))}
       </div>
     </>

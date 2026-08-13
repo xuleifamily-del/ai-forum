@@ -3,6 +3,7 @@ import StorageService from '../services/storageService.js'
 import MigrationService from '../services/migrationService.js'
 import SeedService from '../services/seedService.js'
 import IdentityService from '../services/identityService.js'
+import { checkHealth } from '../services/questionRepository.js'
 
 export async function runForumBootstrap() {
   try {
@@ -26,5 +27,13 @@ export async function runForumBootstrap() {
     StorageService.set(STORAGE_KEYS.BEHAVIOR, behaviorProfile)
   }
 
-  return { identity, behaviorProfile, aiAvailable: true }
+  let dbAvailable = false
+  try {
+    const health = await checkHealth()
+    dbAvailable = !!health?.db
+  } catch (err) {
+    console.warn('[Bootstrap] API health check failed:', err.message)
+  }
+
+  return { identity, behaviorProfile, aiAvailable: true, dbAvailable }
 }

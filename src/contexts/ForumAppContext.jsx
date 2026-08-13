@@ -8,6 +8,7 @@ export function ForumAppProvider({ children }) {
   const [identity, setIdentity] = useState(null)
   const [behaviorProfile, setBehaviorProfile] = useState(null)
   const [aiAvailable] = useState(true)
+  const [dbAvailable, setDbAvailable] = useState(false)
   const [bootstrapping, setBootstrapping] = useState(true)
 
   const bootstrap = useCallback(async () => {
@@ -15,6 +16,7 @@ export function ForumAppProvider({ children }) {
     const res = await runForumBootstrap()
     setIdentity(res.identity)
     setBehaviorProfile(res.behaviorProfile)
+    setDbAvailable(res.dbAvailable)
     setBootstrapping(false)
   }, [])
 
@@ -36,7 +38,7 @@ export function ForumAppProvider({ children }) {
   }
 
   return (
-    <ForumAppContext.Provider value={{ identity, behaviorProfile, aiAvailable, refreshIdentity }}>
+    <ForumAppContext.Provider value={{ identity, behaviorProfile, aiAvailable, dbAvailable, refreshIdentity }}>
       {children}
     </ForumAppContext.Provider>
   )

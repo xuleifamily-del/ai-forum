@@ -1,0 +1,2 @@
+# SPA 路由重定向：所有未匹配路径回退到 index.html
+/*    /index.html    200
