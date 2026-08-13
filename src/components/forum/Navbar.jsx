@@ -117,14 +117,23 @@ export default function Navbar({ active = 'home', identityAvatarStyle, avatarTex
             </div>
           )}
 
-          {/* 匿名身份 */}
-          <button
-            className="relative flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white"
-            style={identityAvatarStyle}
-            title={identityNickname || '匿名身份'}
-          >
-            {avatarText || '匿'}
-          </button>
+          {/* 头像：已登录显示用户名首字，未登录显示匿名身份 */}
+          {user ? (
+            <button
+              className="relative flex h-9 w-9 items-center justify-center rounded-full bg-aif-primary text-xs font-bold text-aif-primary-foreground"
+              title={user.username}
+            >
+              {user.username.charAt(0).toUpperCase()}
+            </button>
+          ) : (
+            <button
+              className="relative flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white"
+              style={identityAvatarStyle}
+              title={identityNickname || '匿名身份'}
+            >
+              {avatarText || '匿'}
+            </button>
+          )}
         </div>
       </div>
     </header>
