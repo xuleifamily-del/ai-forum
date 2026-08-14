@@ -1,7 +1,10 @@
-import { useEffect, useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Eye, MessageCircle, ThumbsUp, Clock } from 'lucide-react'
 import { fetchQuestions } from '../../services/questionRepository.js'
+
+const PAGE_SIZE = 10
+const VALID_SORTS = ['latest', 'hot']
 
 function timeAgo(ts) {
   const diff = Date.now() - ts
@@ -62,28 +65,76 @@ function QuestionCard({ q }) {
   )
 }
 
+function QuestionCardSkeleton() {
+  return (
+    <div className="rounded-xl border border-aif-border bg-aif-card p-5 shadow-sm">
+      <div className="h-6 w-3/4 animate-pulse rounded bg-aif-muted" />
+      <div className="mt-3 h-4 w-full animate-pulse rounded bg-aif-muted" />
+      <div className="mt-2 h-4 w-2/3 animate-pulse rounded bg-aif-muted" />
+      <div className="mt-4 flex gap-2">
+        <div className="h-5 w-12 animate-pulse rounded bg-aif-muted" />
+        <div className="h-5 w-12 animate-pulse rounded bg-aif-muted" />
+      </div>
+      <div className="mt-4 flex gap-4">
+        <div className="h-3.5 w-16 animate-pulse rounded bg-aif-muted" />
+        <div className="h-3.5 w-16 animate-pulse rounded bg-aif-muted" />
+        <div className="h-3.5 w-16 animate-pulse rounded bg-aif-muted" />
+      </div>
+    </div>
+  )
+}
+
 export default function Explore() {
-  const [sort, setSort] = useState('latest')
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // 从 URL 派生 sort / page（带默认值与校验）
+  const sortParam = searchParams.get('sort')
+  const sort = VALID_SORTS.includes(sortParam) ? sortParam : 'latest'
+
+  const pageParam = searchParams.get('page')
+  let page = Number.parseInt(pageParam, 10)
+  if (!Number.isFinite(page) || page < 1) page = 1
+
   const [questions, setQuestions] = useState([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  const loadQuestions = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetchQuestions({ sort, limit: 20 })
-      setQuestions(res.items)
-    } catch (err) {
-      setError(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [sort])
+  const [retryToken, setRetryToken] = useState(0)
 
   useEffect(() => {
-    loadQuestions()
-  }, [loadQuestions])
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    fetchQuestions({ sort, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE })
+      .then((res) => {
+        if (cancelled) return
+        setQuestions(res.items || [])
+        setTotal(res.total || 0)
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setError(err)
+      })
+      .finally(() => {
+        if (cancelled) return
+        setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [sort, page, retryToken])
+
+  const handleSortChange = (newSort) => {
+    setSearchParams({ sort: newSort, page: '1' })
+  }
+
+  const handlePageChange = (newPage) => {
+    setSearchParams({ sort, page: String(newPage) })
+  }
+
+  const handleRetry = () => setRetryToken((t) => t + 1)
+
+  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   const mapQuestionForCard = (q) => {
     const stripped = (q.body || '')
@@ -123,7 +174,7 @@ export default function Explore() {
           <div className="inline-flex items-center rounded-lg border border-aif-border bg-aif-muted p-1">
             <button
               type="button"
-              onClick={() => setSort('latest')}
+              onClick={() => handleSortChange('latest')}
               className={`sort-tab inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
                 sort === 'latest'
                   ? 'bg-aif-card text-aif-primary shadow-sm'
@@ -134,7 +185,7 @@ export default function Explore() {
             </button>
             <button
               type="button"
-              onClick={() => setSort('hot')}
+              onClick={() => handleSortChange('hot')}
               className={`sort-tab inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
                 sort === 'hot'
                   ? 'bg-aif-card text-aif-primary shadow-sm'
@@ -149,24 +200,63 @@ export default function Explore() {
 
       <div className="flex flex-col gap-4">
         {loading && (
-          <div className="text-center py-12 text-aif-muted-foreground">加载中…</div>
+          <>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <QuestionCardSkeleton key={i} />
+            ))}
+          </>
         )}
         {error && (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
             <p className="text-sm text-aif-error">加载失败：{error.message || '未知错误'}</p>
             <button
               type="button"
-              onClick={loadQuestions}
+              onClick={handleRetry}
               className="inline-flex items-center rounded-md bg-aif-primary px-4 py-1.5 text-sm font-medium text-white hover:bg-aif-primary-600"
             >
               重试
             </button>
           </div>
         )}
+        {!loading && !error && questions.length === 0 && (
+          <div className="flex flex-col items-center gap-3 py-12 text-center">
+            <p className="text-sm text-aif-muted-foreground">还没有问题，去提问吧</p>
+            <Link
+              to="/ask"
+              className="inline-flex items-center rounded-md bg-aif-primary px-4 py-1.5 text-sm font-medium text-white hover:bg-aif-primary-600"
+            >
+              去提问
+            </Link>
+          </div>
+        )}
         {!loading && !error && questions.map((q) => (
           <QuestionCard key={q.id} q={mapQuestionForCard(q)} />
         ))}
       </div>
+
+      {!loading && !error && total > 0 && (
+        <div className="mt-6 flex items-center justify-center gap-4 text-sm text-aif-muted-foreground">
+          <button
+            type="button"
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page <= 1}
+            className="inline-flex items-center rounded-md border border-aif-border bg-aif-card px-3 py-1.5 font-medium text-aif-foreground transition-colors hover:border-aif-primary-300 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-aif-border"
+          >
+            上一页
+          </button>
+          <span className="tabular-nums">
+            {page} / {lastPage}
+          </span>
+          <button
+            type="button"
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page >= lastPage}
+            className="inline-flex items-center rounded-md border border-aif-border bg-aif-card px-3 py-1.5 font-medium text-aif-foreground transition-colors hover:border-aif-primary-300 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-aif-border"
+          >
+            下一页
+          </button>
+        </div>
+      )}
     </>
   )
 }

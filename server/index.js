@@ -16,6 +16,7 @@ import answersRouter from './routes/answers.js';
 import summariesRouter from './routes/summaries.js';
 import feedbackRouter from './routes/feedback.js';
 import authRouter from './routes/auth.js';
+import aiRouter from './routes/ai.js';
 import {
   seedQuestions,
   seedAnswers,
@@ -30,10 +31,18 @@ app.use(express.json({ limit: '2mb' }));
 // Health check (always available, reflects DB + Redis state).
 app.get('/api/health', (req, res) => {
   const status = isDbAvailable && isRedisAvailable ? 'ok' : 'degraded';
-  res.json({ status, db: isDbAvailable, redis: isRedisAvailable });
+  res.json({
+    status,
+    db: isDbAvailable,
+    redis: isRedisAvailable,
+    ai: !!process.env.DEEPSEEK_API_KEY,
+  });
 });
 
 app.use('/api/auth', authRouter);
+
+// AI routes do not depend on the database; mount before the DB 503 guard.
+app.use('/api/ai', aiRouter);
 
 // When the database is unavailable, reject all other /api data routes with 503.
 app.use('/api', (req, res, next) => {
@@ -228,7 +237,8 @@ if (process.env.NODE_ENV !== 'test') {
       console.log(
         `[server] ai-forum API listening on http://localhost:${PORT} ` +
           `(db: ${isDbAvailable ? 'connected' : 'unavailable/degraded'}, ` +
-          `redis: ${isRedisAvailable ? 'connected' : 'unavailable/caching-disabled'})`
+          `redis: ${isRedisAvailable ? 'connected' : 'unavailable/caching-disabled'}, ` +
+          `ai: ${process.env.DEEPSEEK_API_KEY ? 'configured' : 'missing'})`
       );
     });
   })();

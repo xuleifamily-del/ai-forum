@@ -27,15 +27,17 @@ export async function runForumBootstrap() {
     StorageService.set(STORAGE_KEYS.BEHAVIOR, behaviorProfile)
   }
 
+  let aiAvailable = false
   let dbAvailable = false
   let redisAvailable = false
   try {
     const health = await checkHealth()
+    aiAvailable = !!health?.ai
     dbAvailable = !!health?.db
     redisAvailable = !!health?.redis
   } catch (err) {
     console.warn('[Bootstrap] API health check failed:', err.message)
   }
 
-  return { identity, behaviorProfile, aiAvailable: true, dbAvailable, redisAvailable }
+  return { identity, behaviorProfile, aiAvailable, dbAvailable, redisAvailable }
 }

@@ -25,4 +25,28 @@ router.post('/:questionId/answers', async (req, res, next) => {
   }
 });
 
+// POST /api/questions/:questionId/answers/:answerId/upvote — toggle upvote
+router.post(
+  '/:questionId/answers/:answerId/upvote',
+  async (req, res, next) => {
+    try {
+      const { direction = 'up' } = req.body || {};
+      if (direction !== 'up' && direction !== 'down') {
+        return res.status(400).json({ error: 'invalid direction' });
+      }
+      const result = await answerRepository.toggleUpvote(
+        req.params.questionId,
+        req.params.answerId,
+        direction
+      );
+      if (!result) {
+        return res.status(404).json({ error: 'answer not found' });
+      }
+      res.json({ upvotes: result.upvotes, upvoted: result.upvoted });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 export default router;

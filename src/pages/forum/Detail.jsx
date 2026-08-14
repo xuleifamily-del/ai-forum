@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -12,8 +12,14 @@ import {
   Send,
   Wand2,
   User,
+  Square,
 } from 'lucide-react'
-import { fetchQuestionDetail, incrementView, createAnswer } from '../../services/questionRepository.js'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { fetchQuestionDetail, incrementView, createAnswer, toggleUpvote } from '../../services/questionRepository.js'
+import * as aiService from '../../services/aiService.js'
+import * as aiInteractionService from '../../services/aiInteractionService.js'
+import * as behaviorService from '../../services/behaviorService.js'
 import { useForumApp } from '../../contexts/ForumAppContext.jsx'
 
 function timeAgo(ts) {
@@ -33,6 +39,21 @@ function timeAgo(ts) {
   return `${year} 年前`
 }
 
+function MarkdownRenderer({ children }) {
+  return (
+    <div className="text-sm leading-relaxed text-aif-card-foreground [&_a]:text-aif-primary [&_a]:underline [&_code]:bg-aif-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono [&_code]:text-[0.85em] [&_pre]:bg-gray-900 [&_pre]:text-gray-100 [&_pre]:p-4 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-gray-100 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_p]:my-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_h1]:text-base [&_h1]:font-semibold [&_h1]:my-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:my-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:my-2 [&_blockquote]:border-l-4 [&_blockquote]:border-aif-border [&_blockquote]:pl-3 [&_blockquote]:text-aif-muted-foreground">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
+        }}
+      >
+        {children}
+      </ReactMarkdown>
+    </div>
+  )
+}
+
 export default function Detail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -42,6 +63,12 @@ export default function Detail() {
   const [error, setError] = useState(null)
   const [answer, setAnswer] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [aiError, setAiError] = useState(null)
+  const [polishing, setPolishing] = useState(false)
+  const [polishHint, setPolishHint] = useState('')
+  const [upvoteMap, setUpvoteMap] = useState({})
+  const [upvoteError, setUpvoteError] = useState(null)
+  const abortRef = useRef(null)
 
   const loadQuestion = async () => {
     try {
@@ -50,6 +77,20 @@ export default function Detail() {
         setError('问题不存在')
       } else {
         setQuestion(res)
+        try {
+          behaviorService.recordView(res.id, res.tags || [])
+        } catch (e) {
+          // 行为信号记录失败不应阻断加载
+        }
+        const map = {}
+        for (const a of res.answers || []) {
+          if (a.isAI) continue
+          map[a.id] = {
+            upvotes: a.upvotes || 0,
+            upvoted: behaviorService.hasUpvoted(a.id),
+          }
+        }
+        setUpvoteMap(map)
       }
     } catch (err) {
       setError(err?.message || '加载失败')
@@ -61,15 +102,97 @@ export default function Detail() {
   useEffect(() => {
     loadQuestion()
     incrementView(id).catch(() => {})
+    return () => {
+      abortRef.current?.abort()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  const handleAiAnswer = () => {
+  const handleAiAnswer = async () => {
+    if (isGenerating || !question) return
     setIsGenerating(true)
-    setTimeout(() => {
-      setAnswer('根据问题分析，这通常是因为依赖中的对象引用不稳定导致的。建议：\n1. 在父组件用 useMemo 包装 filter 对象\n2. 或使用自定义 useDeepCompareEffect hook 做深度比较\n3. 检查 React 18 StrictMode 的双调用是否影响判断')
+    setAiError(null)
+    setAnswer('')
+    const start = performance.now()
+    const controller = new AbortController()
+    abortRef.current = controller
+    try {
+      const { mock } = await aiService.answerStream(
+        {
+          questionId: id,
+          title: question.title,
+          body: question.body,
+          topAnswers: (question.answers || []).slice(0, 3).map((a) => a.content),
+        },
+        (delta) => {
+          setAnswer((prev) => prev + delta)
+        },
+        controller.signal,
+      )
+      aiInteractionService.record({ type: 'answer', success: true, mock, duration: performance.now() - start })
+    } catch (err) {
+      if (err?.name === 'AbortError') {
+        // 用户主动停止，不计为错误
+      } else {
+        aiInteractionService.record({ type: 'answer', success: false, mock: true, duration: performance.now() - start })
+        setAiError(err?.message || 'AI 回答生成失败')
+      }
+    } finally {
       setIsGenerating(false)
-    }, 800)
+      abortRef.current = null
+    }
+  }
+
+  const handleStopGenerate = () => {
+    abortRef.current?.abort()
+  }
+
+  const handlePolish = async () => {
+    if (polishing) return
+    if (!answer.trim()) {
+      setPolishHint('请先输入内容再润色')
+      return
+    }
+    setPolishHint('')
+    setPolishing(true)
+    const start = performance.now()
+    try {
+      const result = await aiService.polish({ type: 'body', text: answer })
+      setAnswer(result.text)
+      aiInteractionService.record({ type: 'polish', success: true, mock: result.mock, duration: performance.now() - start })
+    } catch (err) {
+      aiInteractionService.record({ type: 'polish', success: false, mock: true, duration: performance.now() - start })
+      setPolishHint('润色失败：' + (err?.message || '未知错误'))
+    } finally {
+      setPolishing(false)
+    }
+  }
+
+  const handleUpvote = async (a) => {
+    if (!question) return
+    setUpvoteError(null)
+    const current = upvoteMap[a.id] || {
+      upvotes: a.upvotes || 0,
+      upvoted: behaviorService.hasUpvoted(a.id),
+    }
+    const direction = current.upvoted ? 'down' : 'up'
+    const optimistic = {
+      upvotes: Math.max(0, current.upvotes + (direction === 'up' ? 1 : -1)),
+      upvoted: direction === 'up',
+    }
+    setUpvoteMap((prev) => ({ ...prev, [a.id]: optimistic }))
+    try {
+      const res = await toggleUpvote(id, a.id, direction)
+      setUpvoteMap((prev) => ({
+        ...prev,
+        [a.id]: { upvotes: res.upvotes, upvoted: res.upvoted },
+      }))
+      // recordUpvote 自身为 toggle，成功调用后由其管理客户端去重
+      behaviorService.recordUpvote(a.id, question.tags || [])
+    } catch (err) {
+      setUpvoteMap((prev) => ({ ...prev, [a.id]: current }))
+      setUpvoteError('点赞失败，请稍后重试')
+    }
   }
 
   const handlePublishAnswer = async () => {
@@ -83,6 +206,10 @@ export default function Detail() {
         isAi: false,
       })
       setQuestion(prev => prev ? { ...prev, answers: [...prev.answers, newAnswer], answerCount: prev.answerCount + 1 } : prev)
+      setUpvoteMap((prev) => ({
+        ...prev,
+        [newAnswer.id]: { upvotes: newAnswer.upvotes || 0, upvoted: false },
+      }))
       setAnswer('')
     } catch (err) {
       alert('发布失败：' + err.message)
@@ -139,9 +266,7 @@ export default function Detail() {
                     <span>{question.aiSummary.status || '已生成'}</span>
                   </span>
                 </div>
-                <p className="text-sm leading-relaxed text-aif-card-foreground">
-                  {question.aiSummary.content}
-                </p>
+                <MarkdownRenderer>{question.aiSummary.content}</MarkdownRenderer>
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
@@ -199,10 +324,14 @@ export default function Detail() {
 
           <section className="flex flex-col gap-4" aria-label="回答列表">
             <h2 className="text-lg font-bold text-aif-foreground">{question.answers?.length || 0} 个回答</h2>
+            {upvoteError && (
+              <p className="text-xs text-aif-error">{upvoteError}</p>
+            )}
 
             {(question.answers || []).map((a) => {
               const isAi = !!a.isAI
               const authorName = isAi ? 'AI 助手' : a.authorName
+              const uv = upvoteMap[a.id] || { upvotes: a.upvotes || 0, upvoted: false }
               return (
                 <article
                   key={a.id}
@@ -228,11 +357,21 @@ export default function Detail() {
                     )}
                     <span className="ml-auto text-xs text-aif-muted-foreground">{timeAgo(a.createdAt)}</span>
                   </div>
-                  <p className="text-sm leading-relaxed text-aif-card-foreground">{a.content}</p>
+                  <MarkdownRenderer>{a.content}</MarkdownRenderer>
                   <div className="mt-4 flex items-center gap-4">
                     {!isAi && (
-                      <button className="inline-flex items-center gap-1 text-xs text-aif-muted-foreground hover:text-aif-primary transition-colors">
-                        <ThumbsUp className="h-3.5 w-3.5" /> {a.upvotes || 0}
+                      <button
+                        type="button"
+                        onClick={() => handleUpvote(a)}
+                        aria-pressed={uv.upvoted}
+                        className={`inline-flex items-center gap-1 text-xs transition-colors ${
+                          uv.upvoted
+                            ? 'text-aif-primary'
+                            : 'text-aif-muted-foreground hover:text-aif-primary'
+                        }`}
+                      >
+                        <ThumbsUp className={`h-3.5 w-3.5 ${uv.upvoted ? 'fill-aif-primary' : ''}`} />
+                        <span>{uv.upvotes}</span>
                       </button>
                     )}
                     <button className="inline-flex items-center gap-1 text-xs text-aif-muted-foreground hover:text-aif-primary transition-colors">
@@ -248,31 +387,52 @@ export default function Detail() {
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-base font-semibold text-aif-foreground">撰写回答</h3>
               <div className="flex flex-wrap items-center gap-2">
+                {isGenerating ? (
+                  <button
+                    type="button"
+                    onClick={handleStopGenerate}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors"
+                  >
+                    <Square className="h-3.5 w-3.5 text-aif-error" />
+                    <span>停止</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleAiAnswer}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-aif-primary" />
+                    <span>AI 帮我答</span>
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={handleAiAnswer}
-                  disabled={isGenerating}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60"
-                >
-                  <Sparkles className="h-3.5 w-3.5 text-aif-primary" />
-                  {isGenerating ? '生成中…' : 'AI 帮我答'}
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors"
+                  onClick={handlePolish}
+                  disabled={polishing || isGenerating}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <Wand2 className="h-3.5 w-3.5 text-aif-primary" />
-                  AI 润色
+                  <span>{polishing ? '润色中…' : 'AI 润色'}</span>
                 </button>
               </div>
             </div>
             <textarea
               rows={6}
               value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
+              onChange={(e) => {
+                setAnswer(e.target.value)
+                if (e.target.value.trim() && polishHint) setPolishHint('')
+              }}
               placeholder="输入你的回答，支持 Markdown 格式…"
               className="w-full resize-y rounded-lg border border-aif-input bg-aif-card px-4 py-3 text-base leading-relaxed text-aif-foreground placeholder:text-aif-muted-foreground focus:border-aif-primary focus:outline-none focus:ring-2 focus:ring-aif-primary/20"
             />
+            {(aiError || polishHint) && (
+              <div className="mt-2 text-xs">
+                {aiError && <p className="text-aif-error">{aiError}</p>}
+                {!aiError && polishHint && <p className="text-aif-warning">{polishHint}</p>}
+              </div>
+            )}
             <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
               <button
                 type="button"

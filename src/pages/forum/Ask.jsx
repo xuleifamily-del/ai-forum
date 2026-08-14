@@ -1,37 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { createQuestion } from '../../services/questionRepository.js'
+import { createQuestion, fetchQuestions } from '../../services/questionRepository.js'
+import * as aiService from '../../services/aiService.js'
+import { record as recordAiInteraction } from '../../services/aiInteractionService.js'
 import { useForumApp } from '../../contexts/ForumAppContext.jsx'
 import {
   Sparkles,
-  Wand2,
   Text,
   FilePlus,
   Hash,
   Send,
   FileQuestion,
   CheckCircle2,
+  X,
 } from 'lucide-react'
 
 const recommendTags = ['React', 'TypeScript', 'Tailwind CSS', 'Node.js']
-
-const similarQuestions = [
-  {
-    title: '如何高效地学习 React Hooks 的使用？',
-    answers: 3,
-    likes: 12,
-  },
-  {
-    title: 'TypeScript 泛型在实际项目中的最佳实践有哪些？',
-    answers: 5,
-    likes: 28,
-  },
-  {
-    title: 'Tailwind CSS 与 CSS Modules 应该如何选择？',
-    answers: 8,
-    likes: 45,
-  },
-]
 
 const tips = [
   '标题尽量简洁明确，避免模糊词汇。',
@@ -41,14 +25,39 @@ const tips = [
 
 export default function Ask() {
   const navigate = useNavigate()
-  const { identity } = useForumApp()
+  const { identity, aiAvailable } = useForumApp()
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [tags, setTags] = useState([])
   const [tagInput, setTagInput] = useState('')
   const [showPolishHint, setShowPolishHint] = useState(false)
+  const [polishSuggestion, setPolishSuggestion] = useState('')
+  const [polishMock, setPolishMock] = useState(false)
+  const [similarQuestions, setSimilarQuestions] = useState([])
   const [aiLoading, setAiLoading] = useState(null)
+  const [aiError, setAiError] = useState(null)
+  const [aiNotice, setAiNotice] = useState(null)
   const [publishing, setPublishing] = useState(false)
+
+  // 错误提示 5s 后自动清除（使用 setInterval 自清除实现一次性延时，避免使用 setTimeout）
+  useEffect(() => {
+    if (!aiError) return
+    const id = window.setInterval(() => {
+      setAiError(null)
+      window.clearInterval(id)
+    }, 5000)
+    return () => window.clearInterval(id)
+  }, [aiError])
+
+  // mock 提示 4s 后自动清除
+  useEffect(() => {
+    if (!aiNotice) return
+    const id = window.setInterval(() => {
+      setAiNotice(null)
+      window.clearInterval(id)
+    }, 4000)
+    return () => window.clearInterval(id)
+  }, [aiNotice])
 
   const handleTagKey = (e) => {
     if (e.key === 'Enter' || e.key === ',') {
@@ -83,34 +92,144 @@ export default function Ask() {
       })
       navigate(`/detail/${question.id}`)
     } catch (err) {
-      alert('发布失败：' + err.message)
+      setAiError('发布失败：' + (err.message || '未知错误'))
     } finally {
       setPublishing(false)
     }
   }
 
-  const mockAiAction = (type, target) => {
-    setAiLoading(type)
-    setTimeout(() => {
-      if (target === 'title') {
-        setTitle((prev) => (prev ? `${prev}（附复现步骤与环境信息）` : '如何优雅地处理 React 中 useEffect 依赖不稳定导致的重复执行？'))
-      } else if (type === 'polish') {
-        setBody((prev) => (prev ? `【润色后】\n${prev}\n\n补充说明：以上问题在 React 18 开发环境中尤为明显。` : '【AI 润色示例】问题描述经 AI 优化后表达更清晰，便于回答者理解。'))
-      } else if (type === 'expand') {
-        setBody((prev) => (prev ? `${prev}\n\n【扩写】\n已尝试的方案：\n1. 使用 JSON.stringify 打印依赖值，显示并未变化\n2. 尝试将依赖去除（非理想）后不再重复执行\n期望：能够在保持依赖完整的前提下，定位引用变化的根因。` : '【AI 扩写示例】\n详细描述问题：\n- 运行环境：React 18 + Vite，开启 StrictMode\n- 期望行为：useEffect 仅在 filter 实际变化时执行一次\n- 实际行为：每次渲染都会重新触发 effect'))
-      } else if (type === 'draft') {
-        setBody('【AI 生成草稿】\n\n**问题背景**\n最近在项目中使用 React Hooks 开发时遇到一个比较棘手的问题：\n\n**现象描述**\n- 复现步骤：打开页面 → 观察控制台日志 → 发现 effect 被重复调用\n- 影响范围：导致接口重复请求，产生额外开销\n\n**已尝试方案**\n1. 检查依赖数组是否完整（通过 exhaustive-deps 验证）\n2. 打印依赖值，表面看起来没有变化\n3. 怀疑引用变化，但未掌握可靠的定位手段\n\n**期望结果**\n希望获得一套系统排查步骤，快速定位此类问题。')
-      }
+  // —— AI 润色正文 ——
+  const handlePolishBody = async () => {
+    if (!body.trim()) return
+    const start = performance.now()
+    setAiLoading('polish')
+    setAiError(null)
+    try {
+      const result = await aiService.polish({ type: 'body', text: body })
+      setBody(result.text)
+      if (result.mock) setAiNotice('模拟回复·离线演示')
+      const duration = Math.round(performance.now() - start)
+      recordAiInteraction({ type: 'polish', success: true, mock: !!result.mock, duration })
+    } catch (err) {
+      const duration = Math.round(performance.now() - start)
+      recordAiInteraction({ type: 'polish', success: false, mock: true, duration })
+      setAiError(err.message || 'AI 润色失败')
+    } finally {
       setAiLoading(null)
-      if (target === 'title') setShowPolishHint(false)
-    }, 700)
+    }
   }
 
-  const onTitleChange = (v) => {
-    setTitle(v)
-    if (v.length > 0 && v.length < 12) setShowPolishHint(true)
-    else setShowPolishHint(false)
+  // —— AI 扩写 ——
+  const handleExpand = async () => {
+    const start = performance.now()
+    setAiLoading('expand')
+    setAiError(null)
+    try {
+      const result = await aiService.expand({ title, body })
+      setBody(result.text)
+      if (result.mock) setAiNotice('模拟回复·离线演示')
+      const duration = Math.round(performance.now() - start)
+      recordAiInteraction({ type: 'expand', success: true, mock: !!result.mock, duration })
+    } catch (err) {
+      const duration = Math.round(performance.now() - start)
+      recordAiInteraction({ type: 'expand', success: false, mock: true, duration })
+      setAiError(err.message || 'AI 扩写失败')
+    } finally {
+      setAiLoading(null)
+    }
   }
+
+  // —— 生成草稿 ——
+  const handleDraft = async () => {
+    const start = performance.now()
+    setAiLoading('draft')
+    setAiError(null)
+    try {
+      const result = await aiService.draft({ intent: 'question', title, body })
+      setBody(result.text)
+      if (result.mock) setAiNotice('模拟回复·离线演示')
+      const duration = Math.round(performance.now() - start)
+      recordAiInteraction({ type: 'draft', success: true, mock: !!result.mock, duration })
+    } catch (err) {
+      const duration = Math.round(performance.now() - start)
+      recordAiInteraction({ type: 'draft', success: false, mock: true, duration })
+      setAiError(err.message || '生成草稿失败')
+    } finally {
+      setAiLoading(null)
+    }
+  }
+
+  // —— 标题失焦：模糊检测 + 相似问题 ——
+  const handleTitleBlur = async () => {
+    const trimmed = title.trim()
+    if (trimmed.length < 2) {
+      setShowPolishHint(false)
+      setPolishSuggestion('')
+      setSimilarQuestions([])
+      return
+    }
+
+    // 1. 模糊检测：调用 polish 生成建议
+    const start = performance.now()
+    try {
+      const result = await aiService.polish({ type: 'title', text: title })
+      const suggestion = (result.text || '').trim()
+      if (suggestion && suggestion.toLowerCase() !== trimmed.toLowerCase()) {
+        setPolishSuggestion(suggestion)
+        setPolishMock(result.mock === true)
+        setShowPolishHint(true)
+      } else {
+        setShowPolishHint(false)
+        setPolishSuggestion('')
+      }
+      const duration = Math.round(performance.now() - start)
+      recordAiInteraction({ type: 'polish', success: true, mock: !!result.mock, duration })
+    } catch (err) {
+      const duration = Math.round(performance.now() - start)
+      recordAiInteraction({ type: 'polish', success: false, mock: true, duration })
+      // 标题失焦的失败不弹错误提示，避免打扰输入流
+    }
+
+    // 2. 相似问题：客户端过滤（后端 /api/questions 不支持 keyword 参数）
+    try {
+      const { items } = await fetchQuestions({ sort: 'latest', limit: 5 })
+      const words = Array.from(
+        new Set(
+          trimmed
+            .toLowerCase()
+            .split(/\s+/)
+            .filter((w) => w.length >= 2)
+        )
+      )
+      const matched = []
+      const seen = new Set()
+      for (const q of items || []) {
+        if (matched.length >= 3) break
+        if (!q || !q.id || seen.has(q.id)) continue
+        const qTitle = (q.title || '').toLowerCase()
+        if (words.some((w) => qTitle.includes(w))) {
+          seen.add(q.id)
+          matched.push(q)
+        }
+      }
+      setSimilarQuestions(matched)
+    } catch (err) {
+      setSimilarQuestions([])
+    }
+  }
+
+  const applyPolishSuggestion = () => {
+    setTitle(polishSuggestion)
+    setShowPolishHint(false)
+    setPolishSuggestion('')
+  }
+
+  const dismissPolishHint = () => {
+    setShowPolishHint(false)
+    setPolishSuggestion('')
+  }
+
+  const offlineLabel = aiAvailable ? '' : '（离线演示）'
 
   return (
     <>
@@ -133,25 +252,41 @@ export default function Ask() {
               id="question-title"
               type="text"
               value={title}
-              onChange={(e) => onTitleChange(e.target.value)}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={handleTitleBlur}
               placeholder="一句话概括你的问题，例如：如何学习 React？"
               className="w-full rounded-lg border border-aif-input bg-aif-card px-4 py-3 text-base text-aif-foreground placeholder:text-aif-muted-foreground focus:border-aif-primary focus:outline-none focus:ring-2 focus:ring-aif-primary/20"
             />
-            {showPolishHint && (
+            {showPolishHint && polishSuggestion && (
               <div className="flex items-start gap-3 rounded-lg border border-aif-primary-200 bg-aif-primary-50 p-3">
                 <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-aif-primary" />
-                <p className="flex-1 text-sm text-aif-primary-700">
-                  检测到问题描述较模糊，是否生成更精确的表述？
-                </p>
-                <button
-                  type="button"
-                  onClick={() => mockAiAction('polish', 'title')}
-                  disabled={aiLoading === 'polish'}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-aif-primary px-3 py-1.5 text-xs font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors disabled:opacity-60"
-                >
-                  <Wand2 className="h-3.5 w-3.5" />
-                  {aiLoading === 'polish' ? '处理中…' : 'AI 润色'}
-                </button>
+                <div className="flex-1 space-y-1.5">
+                  <p className="text-sm text-aif-primary-700">
+                    检测到表述可能更清晰，是否采用 AI 建议？
+                  </p>
+                  <p className="text-sm text-aif-foreground">
+                    {polishMock ? '（模拟回复·离线演示）' : ''}
+                    {polishSuggestion}
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={applyPolishSuggestion}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-aif-primary px-3 py-1.5 text-xs font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      采用
+                    </button>
+                    <button
+                      type="button"
+                      onClick={dismissPolishHint}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      忽略
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -164,30 +299,30 @@ export default function Ask() {
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => mockAiAction('polish', 'body')}
-                  disabled={aiLoading === 'polish'}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60"
+                  onClick={handlePolishBody}
+                  disabled={aiLoading === 'polish' || !body.trim()}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <Sparkles className="h-3.5 w-3.5 text-aif-primary" />
-                  {aiLoading === 'polish' ? '处理中…' : 'AI 润色'}
+                  {aiLoading === 'polish' ? '处理中…' : `AI 润色${offlineLabel}`}
                 </button>
                 <button
                   type="button"
-                  onClick={() => mockAiAction('expand', 'body')}
+                  onClick={handleExpand}
                   disabled={aiLoading === 'expand'}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <Text className="h-3.5 w-3.5 text-aif-primary" />
-                  {aiLoading === 'expand' ? '处理中…' : 'AI 扩写'}
+                  {aiLoading === 'expand' ? '处理中…' : `AI 扩写${offlineLabel}`}
                 </button>
                 <button
                   type="button"
-                  onClick={() => mockAiAction('draft', 'body')}
+                  onClick={handleDraft}
                   disabled={aiLoading === 'draft'}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <FilePlus className="h-3.5 w-3.5 text-aif-primary" />
-                  {aiLoading === 'draft' ? '生成中…' : '生成草稿'}
+                  {aiLoading === 'draft' ? '生成中…' : `生成草稿${offlineLabel}`}
                 </button>
               </div>
             </div>
@@ -199,6 +334,17 @@ export default function Ask() {
               placeholder="详细描述你遇到的问题、已尝试的方案和相关环境信息…"
               className="w-full resize-y rounded-lg border border-aif-input bg-aif-card px-4 py-3 text-base leading-relaxed text-aif-foreground placeholder:text-aif-muted-foreground focus:border-aif-primary focus:outline-none focus:ring-2 focus:ring-aif-primary/20"
             />
+            {aiAvailable === false && (
+              <p className="text-xs text-aif-muted-foreground">
+                AI 服务未配置，将返回模拟回复供演示。
+              </p>
+            )}
+            {aiError && (
+              <p className="text-xs text-aif-error">AI 调用失败：{aiError}</p>
+            )}
+            {aiNotice && (
+              <p className="text-xs text-aif-muted-foreground">{aiNotice}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -278,20 +424,24 @@ export default function Ask() {
               <h2 className="text-base font-semibold text-aif-foreground">已有相似问题</h2>
             </div>
             <div className="space-y-3">
-              {similarQuestions.map((q, i) => (
-                <Link
-                  key={i}
-                  to="/detail/sim"
-                  className="group block rounded-lg border border-aif-border bg-aif-muted/50 p-3 hover:border-aif-primary-300 hover:bg-aif-primary-50 transition-colors"
-                >
-                  <h3 className="text-sm font-medium text-aif-foreground group-hover:text-aif-primary-700 transition-colors">
-                    {q.title}
-                  </h3>
-                  <p className="mt-1 text-xs text-aif-muted-foreground">
-                    {q.answers} 个回答 · {q.likes} 赞
-                  </p>
-                </Link>
-              ))}
+              {similarQuestions.length === 0 ? (
+                <p className="text-sm text-aif-muted-foreground">暂无相似问题</p>
+              ) : (
+                similarQuestions.map((q) => (
+                  <Link
+                    key={q.id}
+                    to={`/detail/${q.id}`}
+                    className="group block rounded-lg border border-aif-border bg-aif-muted/50 p-3 hover:border-aif-primary-300 hover:bg-aif-primary-50 transition-colors"
+                  >
+                    <h3 className="text-sm font-medium text-aif-foreground group-hover:text-aif-primary-700 transition-colors">
+                      {q.title}
+                    </h3>
+                    <p className="mt-1 text-xs text-aif-muted-foreground">
+                      {q.answerCount ?? 0} 个回答 · {q.viewCount ?? 0} 浏览
+                    </p>
+                  </Link>
+                ))
+              )}
             </div>
           </div>
 

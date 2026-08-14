@@ -64,4 +64,27 @@ async function incrementUpvote(id) {
   await query('UPDATE answers SET upvotes = upvotes + 1 WHERE id = $1', [id]);
 }
 
-export { listByQuestion, createAnswer, incrementUpvote };
+async function toggleUpvote(questionId, answerId, direction = 'up') {
+  const isDown = direction === 'down';
+  const setClause = isDown
+    ? 'upvotes = GREATEST(upvotes - 1, 0)'
+    : 'upvotes = upvotes + 1';
+  const result = await query(
+    `UPDATE answers SET ${setClause}
+     WHERE id = $1 AND question_id = $2
+     RETURNING id, question_id, upvotes`,
+    [answerId, questionId]
+  );
+  if (result.rows.length === 0) {
+    return null;
+  }
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    questionId: row.question_id,
+    upvotes: row.upvotes,
+    upvoted: !isDown,
+  };
+}
+
+export { listByQuestion, createAnswer, incrementUpvote, toggleUpvote };

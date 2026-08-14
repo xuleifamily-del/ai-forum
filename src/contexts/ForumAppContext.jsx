@@ -17,7 +17,7 @@ function decodeJwtPayload(token) {
 export function ForumAppProvider({ children }) {
   const [identity, setIdentity] = useState(null)
   const [behaviorProfile, setBehaviorProfile] = useState(null)
-  const [aiAvailable] = useState(true)
+  const [aiAvailable, setAiAvailable] = useState(false)
   const [dbAvailable, setDbAvailable] = useState(false)
   const [redisAvailable, setRedisAvailable] = useState(false)
   const [bootstrapping, setBootstrapping] = useState(true)
@@ -28,6 +28,7 @@ export function ForumAppProvider({ children }) {
     const res = await runForumBootstrap()
     setIdentity(res.identity)
     setBehaviorProfile(res.behaviorProfile)
+    setAiAvailable(res.aiAvailable)
     setDbAvailable(res.dbAvailable)
     setRedisAvailable(res.redisAvailable)
 

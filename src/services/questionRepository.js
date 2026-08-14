@@ -54,6 +54,17 @@ export async function createAnswer(questionId, data) {
 }
 
 /**
+ * 切换回答点赞状态
+ * @param {string} questionId
+ * @param {string} answerId
+ * @param {'up'|'down'} [direction='up']
+ * @returns {Promise<{ upvotes: number, upvoted: boolean }>}
+ */
+export async function toggleUpvote(questionId, answerId, direction = 'up') {
+  return apiClient.post(`/questions/${questionId}/answers/${answerId}/upvote`, { direction });
+}
+
+/**
  * 创建 / 更新 AI 摘要
  * @param {string} questionId
  * @param {{ content: string, sourceAnswerIds: string[], citations: object[], status?: string }} data
