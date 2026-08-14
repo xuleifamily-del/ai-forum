@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Eye, MessageCircle, ThumbsUp, Clock } from 'lucide-react'
-import { fetchQuestions } from '../../services/questionRepository.js'
+import { listQuestionsPage } from '../../services/questionRepository.js'
+import QuestionSkeleton from '../../components/forum/QuestionSkeleton.jsx'
 
 const PAGE_SIZE = 10
 const VALID_SORTS = ['latest', 'hot']
@@ -65,76 +66,20 @@ function QuestionCard({ q }) {
   )
 }
 
-function QuestionCardSkeleton() {
-  return (
-    <div className="rounded-xl border border-aif-border bg-aif-card p-5 shadow-sm">
-      <div className="h-6 w-3/4 animate-pulse rounded bg-aif-muted" />
-      <div className="mt-3 h-4 w-full animate-pulse rounded bg-aif-muted" />
-      <div className="mt-2 h-4 w-2/3 animate-pulse rounded bg-aif-muted" />
-      <div className="mt-4 flex gap-2">
-        <div className="h-5 w-12 animate-pulse rounded bg-aif-muted" />
-        <div className="h-5 w-12 animate-pulse rounded bg-aif-muted" />
-      </div>
-      <div className="mt-4 flex gap-4">
-        <div className="h-3.5 w-16 animate-pulse rounded bg-aif-muted" />
-        <div className="h-3.5 w-16 animate-pulse rounded bg-aif-muted" />
-        <div className="h-3.5 w-16 animate-pulse rounded bg-aif-muted" />
-      </div>
-    </div>
-  )
-}
-
 export default function Explore() {
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // 从 URL 派生 sort / page（带默认值与校验）
   const sortParam = searchParams.get('sort')
   const sort = VALID_SORTS.includes(sortParam) ? sortParam : 'latest'
+  const category = searchParams.get('category') || ''
 
-  const pageParam = searchParams.get('page')
-  let page = Number.parseInt(pageParam, 10)
-  if (!Number.isFinite(page) || page < 1) page = 1
-
-  const [questions, setQuestions] = useState([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [items, setItems] = useState([])
+  const [page, setPage] = useState(1)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
+  const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState(null)
-  const [retryToken, setRetryToken] = useState(0)
-
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    setError(null)
-    fetchQuestions({ sort, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE })
-      .then((res) => {
-        if (cancelled) return
-        setQuestions(res.items || [])
-        setTotal(res.total || 0)
-      })
-      .catch((err) => {
-        if (cancelled) return
-        setError(err)
-      })
-      .finally(() => {
-        if (cancelled) return
-        setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [sort, page, retryToken])
-
-  const handleSortChange = (newSort) => {
-    setSearchParams({ sort: newSort, page: '1' })
-  }
-
-  const handlePageChange = (newPage) => {
-    setSearchParams({ sort, page: String(newPage) })
-  }
-
-  const handleRetry = () => setRetryToken((t) => t + 1)
-
-  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const sentinelRef = useRef(null)
 
   const mapQuestionForCard = (q) => {
     const stripped = (q.body || '')
@@ -158,6 +103,62 @@ export default function Explore() {
       hot: q.viewCount,
     }
   }
+
+  const loadPage = async (p) => {
+    if (loadingMore) return
+    setLoadingMore(true)
+    setError(null)
+    try {
+      const { data, hasNext } = await listQuestionsPage({
+        page: p,
+        pageSize: PAGE_SIZE,
+        sort,
+        category: category || undefined,
+      })
+      const mapped = data.map(mapQuestionForCard)
+      if (p === 1) {
+        setItems(mapped)
+      } else {
+        setItems((prev) => [...prev, ...mapped])
+      }
+      setHasMore(hasNext)
+      setPage(p)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoadingMore(false)
+      setInitialLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    setInitialLoading(true)
+    loadPage(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, category])
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (entry.isIntersecting && hasMore && !loadingMore && !initialLoading) {
+          loadPage(page + 1)
+        }
+      },
+      { rootMargin: '100px' }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, loadingMore, page, initialLoading])
+
+  const handleSortChange = (newSort) => {
+    setSearchParams({ sort: newSort, page: '1', ...(category ? { category } : {}) })
+  }
+
+  const handleRetry = () => loadPage(1)
 
   return (
     <>
@@ -199,10 +200,10 @@ export default function Explore() {
       </section>
 
       <div className="flex flex-col gap-4">
-        {loading && (
+        {initialLoading && (
           <>
             {Array.from({ length: 3 }).map((_, i) => (
-              <QuestionCardSkeleton key={i} />
+              <QuestionSkeleton key={i} />
             ))}
           </>
         )}
@@ -218,7 +219,7 @@ export default function Explore() {
             </button>
           </div>
         )}
-        {!loading && !error && questions.length === 0 && (
+        {!initialLoading && !error && items.length === 0 && (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
             <p className="text-sm text-aif-muted-foreground">还没有问题，去提问吧</p>
             <Link
@@ -229,34 +230,18 @@ export default function Explore() {
             </Link>
           </div>
         )}
-        {!loading && !error && questions.map((q) => (
-          <QuestionCard key={q.id} q={mapQuestionForCard(q)} />
+        {!initialLoading && !error && items.map((q) => (
+          <QuestionCard key={q.id} q={q} />
         ))}
+        {loadingMore && !initialLoading && (
+          <>
+            {Array.from({ length: 10 }).map((_, i) => (
+              <QuestionSkeleton key={`skeleton-${i}`} />
+            ))}
+          </>
+        )}
+        <div ref={sentinelRef} className="h-8" />
       </div>
-
-      {!loading && !error && total > 0 && (
-        <div className="mt-6 flex items-center justify-center gap-4 text-sm text-aif-muted-foreground">
-          <button
-            type="button"
-            onClick={() => handlePageChange(page - 1)}
-            disabled={page <= 1}
-            className="inline-flex items-center rounded-md border border-aif-border bg-aif-card px-3 py-1.5 font-medium text-aif-foreground transition-colors hover:border-aif-primary-300 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-aif-border"
-          >
-            上一页
-          </button>
-          <span className="tabular-nums">
-            {page} / {lastPage}
-          </span>
-          <button
-            type="button"
-            onClick={() => handlePageChange(page + 1)}
-            disabled={page >= lastPage}
-            className="inline-flex items-center rounded-md border border-aif-border bg-aif-card px-3 py-1.5 font-medium text-aif-foreground transition-colors hover:border-aif-primary-300 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-aif-border"
-          >
-            下一页
-          </button>
-        </div>
-      )}
     </>
   )
 }

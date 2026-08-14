@@ -255,6 +255,81 @@ function getMockResponse(engine, params = {}) {
         '> 以上为离线演示内容，连接 DeepSeek 后将获得针对该问题的实时回答。'
       )
     }
+    case 'summary': {
+      const topAnswers = Array.isArray(params.topAnswers) ? params.topAnswers : []
+      if (topAnswers.length === 0) {
+        return MOCK_PREFIX + '暂无社区回答覆盖，建议等待其他用户补充或在其他平台搜索相关资料。'
+      }
+      const count = topAnswers.length
+      const t = (params.title || '').trim()
+      const headline = t
+        ? `综合已有 ${count} 条回答，「${t}」的核心要点如下：`
+        : `综合已有 ${count} 条回答，核心要点如下：`
+      const samplePoints = [
+        '首先检查是否 React 18 StrictMode 开发环境双重触发 [1]',
+        '其次确认依赖数组是否包含对象/数组字面量导致引用变化 [2]',
+        '若依赖包含函数，用 useCallback 包一层稳定引用 [1][3]',
+        '排查外部事件监听未清理导致副作用重复执行 [2]',
+      ]
+      const usedPoints = samplePoints.slice(0, Math.min(count + 1, samplePoints.length))
+      return MOCK_PREFIX + headline + '\n' + usedPoints.map(p => `- ${p}`).join('\n')
+    }
+    case 'search-rewrite': {
+      const q = (params.query || '').trim() || '搜索'
+      const lowerQ = q.toLowerCase()
+      let rewritten = q
+      let keywords = []
+      if (lowerQ.includes('useeffect') || lowerQ.includes('effect')) {
+        if (lowerQ.includes('跑两次') || lowerQ.includes('两次') || lowerQ.includes('重复')) {
+          rewritten = 'React useEffect 重复执行、StrictMode 开发环境双重调用'
+          keywords = ['React', 'useEffect', '重复执行', 'StrictMode']
+        } else if (lowerQ.includes('死循环') || lowerQ.includes('无限')) {
+          rewritten = 'React useEffect infinite loop、依赖数组不稳定导致无限循环'
+          keywords = ['React', 'useEffect', 'infinite loop', '依赖数组']
+        } else {
+          rewritten = 'React useEffect 副作用钩子使用与排错'
+          keywords = ['React', 'useEffect', 'Hooks', '副作用']
+        }
+      } else if (lowerQ.includes('挂了') || lowerQ.includes('崩溃') || lowerQ.includes('5xx') || lowerQ.includes('服务')) {
+        rewritten = '服务崩溃、5xx 服务端错误排查与定位'
+        keywords = ['服务崩溃', '5xx', '排查', '服务端错误']
+      } else if (lowerQ.includes('死循环')) {
+        rewritten = 'infinite loop 无限循环、死循环排查方法'
+        keywords = ['infinite loop', '死循环', '排查']
+      } else if (lowerQ.includes('跑两次') || lowerQ.includes('两次') || lowerQ.includes('重复执行')) {
+        rewritten = '重复执行、双重调用原因排查'
+        keywords = ['重复执行', '双重调用', '排查']
+      } else {
+        const words = q.split(/\s+/).filter(Boolean)
+        rewritten = q
+        keywords = words.length > 0 ? words.slice(0, 5) : [q]
+      }
+      return JSON.stringify({ rewritten, keywords })
+    }
+    case 'search-summary': {
+      const questions = Array.isArray(params.topQuestions) ? params.topQuestions : []
+      const q = (params.query || '').trim() || '该查询'
+      const rw = (params.rewritten || q).trim()
+      if (questions.length === 0) {
+        return MOCK_PREFIX + '现有帖子未覆盖该查询的明确结论。建议尝试更通用的关键词，或换一种表述方式搜索。'
+      }
+      const count = questions.length
+      const headline = `基于 ${count} 条相关帖子，关于「${rw || q}」的要点如下：`
+      const genericPoints = [
+        `帖子中提到该问题的常见原因与背景说明 [1]`,
+        `社区给出的具体排查步骤与诊断方法 [2]`,
+        `可落地的解决方案与代码示例 [3]`,
+        `需要注意的边界条件与常见坑点 [1][2]`,
+        `后续延伸阅读与参考资料推荐 [${Math.min(count, 4)}]`,
+      ]
+      const usedCount = Math.min(count, 5)
+      const usedPoints = genericPoints.slice(0, Math.max(3, usedCount))
+      const adjustedPoints = usedPoints.map((p, i) => {
+        const safeIdx = Math.min(i + 1, count)
+        return p.replace(/\[\d+\]/g, () => `[${safeIdx}]`)
+      })
+      return MOCK_PREFIX + headline + '\n' + adjustedPoints.map(p => `- ${p}`).join('\n')
+    }
     default: {
       return (
         MOCK_PREFIX +

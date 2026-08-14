@@ -31,6 +31,7 @@ async function listByQuestion(questionId) {
 async function createAnswer(data) {
   const id = crypto.randomUUID();
   const now = Date.now();
+  const aiSourceAnswerIds = Array.isArray(data.aiSourceAnswerIds) ? data.aiSourceAnswerIds : [];
   const result = await query(
     `INSERT INTO answers
       (id, question_id, author_id, author_name, author_avatar_seed, content,
@@ -45,7 +46,7 @@ async function createAnswer(data) {
       data.authorAvatarSeed,
       data.content,
       data.isAi || false,
-      [],
+      aiSourceAnswerIds,
       0,
       'published',
       now,

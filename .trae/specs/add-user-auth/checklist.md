@@ -1,0 +1,23 @@
+# Checklist
+
+- [x] `users` 表在 `schema.sql` 中定义（id UUID PK, username TEXT UNIQUE, password_hash TEXT, created_at BIGINT）
+- [x] `bcryptjs` 和 `jsonwebtoken` 已加入 `package.json` dependencies 并安装成功
+- [x] `userRepository.js` 实现 `createUser` / `getUserByUsername` / `getUserById` 三个方法
+- [x] `auth.js` 中间件能从 `Authorization: Bearer <token>` 解析并验证 JWT，设置 `req.user`
+- [x] `POST /api/auth/register` 校验用户名(3-20)和密码(6-64)，bcrypt 哈希后写入数据库，返回 JWT token
+- [x] `POST /api/auth/register` 用户名重复时返回 409
+- [x] `POST /api/auth/register` 字段校验失败时返回 400
+- [x] `POST /api/auth/login` 验证凭据，成功返回 JWT token，失败返回 401
+- [x] `/api/auth` 路由挂在 503 DB 检查中间件之前，注册/登录不依赖 `isDbAvailable` 状态
+- [x] `forumStorageKeys.js` 新增 `AUTH_TOKEN` 键
+- [x] `authService.js` 实现 `register` / `login` / `getToken` / `setToken` / `removeToken`
+- [x] `apiClient.js` 请求时自动从 localStorage 读取 token 并设置 `Authorization` 头
+- [x] `ForumAppContext` 新增 `user` 状态及 `login` / `register` / `logout` 方法
+- [x] `ForumAppContext` 初始化时从 localStorage 读取 token 并恢复登录状态
+- [x] `Login.jsx` 页面包含用户名+密码表单，提交后调用 `login()`，成功跳转首页
+- [x] `Register.jsx` 页面包含用户名+密码+确认密码表单，提交后调用 `register()`，成功跳转首页
+- [x] `App.jsx` 新增 `/login` 和 `/register` 路由
+- [x] `Navbar.jsx` 未登录时显示「登录」「注册」按钮
+- [x] `Navbar.jsx` 已登录时显示用户名和「退出」按钮
+- [x] `npm run build` 构建通过无报错
+- [x] 代码已提交并推送到 GitHub main 分支

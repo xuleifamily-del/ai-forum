@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { createQuestion, fetchQuestions } from '../../services/questionRepository.js'
 import * as aiService from '../../services/aiService.js'
-import { record as recordAiInteraction } from '../../services/aiInteractionService.js'
+import * as aiInteractionService from '../../services/aiInteractionService.js'
+import * as notificationService from '../../services/notificationService.js'
 import { useForumApp } from '../../contexts/ForumAppContext.jsx'
 import AiGate from '../../components/forum/AiGate.jsx'
 import useDebounce from '../../hooks/useDebounce.js'
+import degradationService from '../../services/degradationService.js'
 import {
   Sparkles,
   Text,
@@ -29,6 +31,7 @@ const tips = [
 export default function Ask() {
   const navigate = useNavigate()
   const { identity, aiAvailable, user } = useForumApp()
+  const { aiState } = degradationService.getState()
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [tags, setTags] = useState([])
@@ -44,8 +47,13 @@ export default function Ask() {
   const [showVaguenessHint, setShowVaguenessHint] = useState(false)
   const [lastVaguenessCheckedText, setLastVaguenessCheckedText] = useState('')
   const [vaguenessResult, setVaguenessResult] = useState(null)
+  const lastClickTsRef = useRef(0)
 
   const debouncedTitle = useDebounce(title, 800)
+
+  useEffect(() => {
+    aiInteractionService.markSessionEligible('ask')
+  }, [])
 
   const _runVaguenessCheck = useCallback((titleText, { force = false } = {}) => {
     const trimmed = titleText.trim()
@@ -75,7 +83,13 @@ export default function Ask() {
   }, [showVaguenessHint])
 
   const handlePolishTitleFromHint = async () => {
+    if (aiLoading !== null) return
+    if (lastClickTsRef.current && Date.now() - lastClickTsRef.current < 500) return
+    lastClickTsRef.current = Date.now()
     if (!title.trim()) return
+    if (notificationService.getPermission() === 'default') {
+      notificationService.requestPermission()
+    }
     const start = performance.now()
     setAiLoading('polish-title')
     setAiError(null)
@@ -88,10 +102,10 @@ export default function Ask() {
       const mock = result?.mock === true
       if (mock) setAiNotice('模拟回复·离线演示')
       const duration = Math.round(performance.now() - start)
-      recordAiInteraction({ type: 'polish', success: true, mock, duration, subType: 'vaguenessHint' })
+      aiInteractionService.record({ type: 'polish', success: true, mock, duration, subType: 'vaguenessHint' })
     } catch (err) {
       const duration = Math.round(performance.now() - start)
-      recordAiInteraction({ type: 'polish', success: false, mock: true, duration, subType: 'vaguenessHint' })
+      aiInteractionService.record({ type: 'polish', success: false, mock: true, duration, subType: 'vaguenessHint' })
       setAiError(err.message || 'AI 润色失败')
     } finally {
       setAiLoading(null)
@@ -159,7 +173,13 @@ export default function Ask() {
 
   // —— AI 润色正文 ——
   const handlePolishBody = async () => {
+    if (aiLoading !== null) return
+    if (lastClickTsRef.current && Date.now() - lastClickTsRef.current < 500) return
+    lastClickTsRef.current = Date.now()
     if (!body.trim()) return
+    if (notificationService.getPermission() === 'default') {
+      notificationService.requestPermission()
+    }
     const start = performance.now()
     setAiLoading('polish')
     setAiError(null)
@@ -168,10 +188,10 @@ export default function Ask() {
       setBody(result.text)
       if (result.mock) setAiNotice('模拟回复·离线演示')
       const duration = Math.round(performance.now() - start)
-      recordAiInteraction({ type: 'polish', success: true, mock: !!result.mock, duration })
+      aiInteractionService.record({ type: 'polish', success: true, mock: !!result.mock, duration })
     } catch (err) {
       const duration = Math.round(performance.now() - start)
-      recordAiInteraction({ type: 'polish', success: false, mock: true, duration })
+      aiInteractionService.record({ type: 'polish', success: false, mock: true, duration })
       setAiError(err.message || 'AI 润色失败')
     } finally {
       setAiLoading(null)
@@ -180,6 +200,12 @@ export default function Ask() {
 
   // —— AI 扩写 ——
   const handleExpand = async () => {
+    if (aiLoading !== null) return
+    if (lastClickTsRef.current && Date.now() - lastClickTsRef.current < 500) return
+    lastClickTsRef.current = Date.now()
+    if (notificationService.getPermission() === 'default') {
+      notificationService.requestPermission()
+    }
     const start = performance.now()
     setAiLoading('expand')
     setAiError(null)
@@ -188,10 +214,10 @@ export default function Ask() {
       setBody(result.text)
       if (result.mock) setAiNotice('模拟回复·离线演示')
       const duration = Math.round(performance.now() - start)
-      recordAiInteraction({ type: 'expand', success: true, mock: !!result.mock, duration })
+      aiInteractionService.record({ type: 'expand', success: true, mock: !!result.mock, duration })
     } catch (err) {
       const duration = Math.round(performance.now() - start)
-      recordAiInteraction({ type: 'expand', success: false, mock: true, duration })
+      aiInteractionService.record({ type: 'expand', success: false, mock: true, duration })
       setAiError(err.message || 'AI 扩写失败')
     } finally {
       setAiLoading(null)
@@ -200,6 +226,12 @@ export default function Ask() {
 
   // —— 生成草稿 ——
   const handleDraft = async () => {
+    if (aiLoading !== null) return
+    if (lastClickTsRef.current && Date.now() - lastClickTsRef.current < 500) return
+    lastClickTsRef.current = Date.now()
+    if (notificationService.getPermission() === 'default') {
+      notificationService.requestPermission()
+    }
     const start = performance.now()
     setAiLoading('draft')
     setAiError(null)
@@ -208,10 +240,10 @@ export default function Ask() {
       setBody(result.text)
       if (result.mock) setAiNotice('模拟回复·离线演示')
       const duration = Math.round(performance.now() - start)
-      recordAiInteraction({ type: 'draft', success: true, mock: !!result.mock, duration })
+      aiInteractionService.record({ type: 'draft', success: true, mock: !!result.mock, duration })
     } catch (err) {
       const duration = Math.round(performance.now() - start)
-      recordAiInteraction({ type: 'draft', success: false, mock: true, duration })
+      aiInteractionService.record({ type: 'draft', success: false, mock: true, duration })
       setAiError(err.message || '生成草稿失败')
     } finally {
       setAiLoading(null)
@@ -243,10 +275,10 @@ export default function Ask() {
         setPolishSuggestion('')
       }
       const duration = Math.round(performance.now() - start)
-      recordAiInteraction({ type: 'polish', success: true, mock: !!result.mock, duration })
+      aiInteractionService.record({ type: 'polish', success: true, mock: !!result.mock, duration })
     } catch (err) {
       const duration = Math.round(performance.now() - start)
-      recordAiInteraction({ type: 'polish', success: false, mock: true, duration })
+      aiInteractionService.record({ type: 'polish', success: false, mock: true, duration })
       // 标题失焦的失败不弹错误提示，避免打扰输入流
     }
 
@@ -326,7 +358,7 @@ export default function Ask() {
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr,320px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <section className="space-y-6">
           <div className="space-y-2">
             <label htmlFor="question-title" className="block text-sm font-semibold text-aif-foreground">
@@ -356,13 +388,16 @@ export default function Ask() {
                   {vaguenessResult.suggestion && (
                     <p className="text-xs text-aif-muted-foreground">{vaguenessResult.suggestion}</p>
                   )}
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-1">
                     <AiGate fallbackTooltip="AI 暂不可用，无法润色" loading={aiLoading === 'polish-title'}>
                       <button
                         type="button"
-                        onClick={handlePolishTitleFromHint}
-                        disabled={aiLoading === 'polish-title'}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-aif-primary px-3 py-1.5 text-xs font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        onClick={() => {
+                          if (aiLoading) return
+                          handlePolishTitleFromHint()
+                        }}
+                        disabled={!!aiLoading || aiState === 'unavailable'}
+                        className="inline-flex items-center gap-1.5 rounded-md bg-aif-primary px-3 py-1.5 text-xs font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-w-[44px] min-h-[44px]"
                       >
                         <Sparkles className="h-3.5 w-3.5" />
                         {aiLoading === 'polish-title' ? '处理中…' : 'AI 润色'}
@@ -371,7 +406,7 @@ export default function Ask() {
                     <button
                       type="button"
                       onClick={() => setShowVaguenessHint(false)}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors min-w-[44px] min-h-[44px]"
                     >
                       忽略
                     </button>
@@ -390,12 +425,12 @@ export default function Ask() {
                     {polishMock ? '（模拟回复·离线演示）' : ''}
                     {polishSuggestion}
                   </p>
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-1">
                     <AiGate fallbackTooltip="AI 暂不可用，无法采用建议">
                       <button
                         type="button"
                         onClick={applyPolishSuggestion}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-aif-primary px-3 py-1.5 text-xs font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-md bg-aif-primary px-3 py-1.5 text-xs font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors min-w-[44px] min-h-[44px]"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         采用
@@ -404,7 +439,7 @@ export default function Ask() {
                     <button
                       type="button"
                       onClick={dismissPolishHint}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors min-w-[44px] min-h-[44px]"
                     >
                       <X className="h-3.5 w-3.5" />
                       忽略
@@ -424,9 +459,12 @@ export default function Ask() {
                 <AiGate fallbackTooltip="AI 暂不可用" loading={aiLoading === 'polish'}>
                   <button
                     type="button"
-                    onClick={handlePolishBody}
-                    disabled={aiLoading === 'polish' || !body.trim()}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    onClick={() => {
+                      if (aiLoading) return
+                      handlePolishBody()
+                    }}
+                    disabled={!!aiLoading || aiState === 'unavailable' || !body.trim()}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-w-[44px] min-h-[44px]"
                   >
                     <Sparkles className="h-3.5 w-3.5 text-aif-primary" />
                     {aiLoading === 'polish' ? '处理中…' : `AI 润色${offlineLabel}`}
@@ -435,9 +473,12 @@ export default function Ask() {
                 <AiGate fallbackTooltip="AI 暂不可用" loading={aiLoading === 'expand'}>
                   <button
                     type="button"
-                    onClick={handleExpand}
-                    disabled={aiLoading === 'expand'}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    onClick={() => {
+                      if (aiLoading) return
+                      handleExpand()
+                    }}
+                    disabled={!!aiLoading || aiState === 'unavailable'}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-w-[44px] min-h-[44px]"
                   >
                     <Text className="h-3.5 w-3.5 text-aif-primary" />
                     {aiLoading === 'expand' ? '处理中…' : `AI 扩写${offlineLabel}`}
@@ -446,9 +487,12 @@ export default function Ask() {
                 <AiGate fallbackTooltip="AI 暂不可用" loading={aiLoading === 'draft'}>
                   <button
                     type="button"
-                    onClick={handleDraft}
-                    disabled={aiLoading === 'draft'}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    onClick={() => {
+                      if (aiLoading) return
+                      handleDraft()
+                    }}
+                    disabled={!!aiLoading || aiState === 'unavailable'}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-w-[44px] min-h-[44px]"
                   >
                     <FilePlus className="h-3.5 w-3.5 text-aif-primary" />
                     {aiLoading === 'draft' ? '生成中…' : `生成草稿${offlineLabel}`}
@@ -531,7 +575,7 @@ export default function Ask() {
           <div className="flex flex-col-reverse gap-3 border-t border-aif-border pt-6 sm:flex-row sm:items-center sm:justify-end">
             <Link
               to="/"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-aif-border bg-aif-card px-5 py-2.5 text-sm font-semibold text-aif-foreground hover:bg-aif-muted transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-aif-border bg-aif-card px-5 py-2.5 text-sm font-semibold text-aif-foreground hover:bg-aif-muted transition-colors w-full sm:w-auto min-w-[44px] min-h-[44px]"
             >
               取消
             </Link>
@@ -539,7 +583,7 @@ export default function Ask() {
               type="button"
               onClick={handlePublish}
               disabled={!title.trim() || !body.trim() || publishing}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-aif-primary px-5 py-2.5 text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-aif-primary px-5 py-2.5 text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto sm:min-w-[120px] min-h-[44px]"
             >
               <Send className="h-4 w-4" />
               {publishing ? '发布中…' : '发布问题'}

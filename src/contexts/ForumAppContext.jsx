@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { runForumBootstrap } from '../bootstrap/forumBootstrap.js'
 import IdentityService from '../services/identityService.js'
 import authService from '../services/authService.js'
+import degradationService from '../services/degradationService.js'
 
 export const ForumAppContext = createContext(null)
 
@@ -22,6 +23,9 @@ export function ForumAppProvider({ children }) {
   const [redisAvailable, setRedisAvailable] = useState(false)
   const [bootstrapping, setBootstrapping] = useState(true)
   const [user, setUser] = useState(null)
+  const initialDegradation = degradationService.getState()
+  const [aiState, setAiState] = useState(initialDegradation.aiState)
+  const [aiUnavailableReason, setAiUnavailableReason] = useState(initialDegradation.reason)
 
   const bootstrap = useCallback(async () => {
     setBootstrapping(true)
@@ -43,10 +47,21 @@ export function ForumAppProvider({ children }) {
     setBootstrapping(false)
   }, [])
 
-  const refreshIdentity = useCallback(async () => {
-    IdentityService.reset()
-    return bootstrap()
-  }, [bootstrap])
+  const refreshIdentity = useCallback(() => {
+    const fresh = IdentityService.getOrCreate()
+    setIdentity(fresh)
+    return fresh
+  }, [])
+
+  useEffect(() => {
+    const handleIdentityUpdated = (e) => {
+      setIdentity(e.detail)
+    }
+    window.addEventListener('aif-identity-updated', handleIdentityUpdated)
+    return () => {
+      window.removeEventListener('aif-identity-updated', handleIdentityUpdated)
+    }
+  }, [])
 
   const login = useCallback(async (username, password) => {
     const data = await authService.login(username, password);
@@ -65,8 +80,26 @@ export function ForumAppProvider({ children }) {
     setUser(null);
   }, [])
 
+  const reportAiFailure = useCallback((reason) => {
+    degradationService.reportFailure(reason);
+  }, [])
+
+  const reportAiSuccess = useCallback(() => {
+    degradationService.reportSuccess();
+  }, [])
+
   useEffect(() => {
     bootstrap()
+    degradationService.checkAiAvailable();
+    const unsubscribe = degradationService.subscribe((newState) => {
+      setAiState(newState.aiState);
+      setAiUnavailableReason(newState.reason);
+      setAiAvailable(newState.aiState === 'available');
+    });
+    return () => {
+      unsubscribe();
+      degradationService.stopPolling();
+    };
   }, [bootstrap])
 
   if (bootstrapping) {
@@ -78,7 +111,7 @@ export function ForumAppProvider({ children }) {
   }
 
   return (
-    <ForumAppContext.Provider value={{ identity, behaviorProfile, aiAvailable, dbAvailable, redisAvailable, refreshIdentity, user, login, register, logout }}>
+    <ForumAppContext.Provider value={{ identity, behaviorProfile, aiAvailable, aiState, aiUnavailableReason, dbAvailable, redisAvailable, refreshIdentity, user, login, register, logout, reportAiFailure, reportAiSuccess }}>
       {children}
     </ForumAppContext.Provider>
   )

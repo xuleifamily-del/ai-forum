@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        xs: '375px',
+      },
       colors: {
         // AI 论坛配色（aif = AI Forum）
         'aif-primary-50': '#eef0ff',

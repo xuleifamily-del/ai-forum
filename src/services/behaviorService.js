@@ -104,6 +104,25 @@ export function recordView(questionId, tags = []) {
   }
 }
 
+export function recordSearch(query) {
+  if (!query || typeof query !== 'string') return;
+  const trimmed = query.trim();
+  if (!trimmed) return;
+  try {
+    const behavior = getBehavior();
+    const existing = Array.isArray(behavior.searchQueries) ? behavior.searchQueries : [];
+    const deduped = existing.filter((q) => q !== trimmed);
+    deduped.unshift(trimmed);
+    const bounded = deduped.slice(0, 50);
+    saveBehavior({
+      ...behavior,
+      searchQueries: bounded,
+    });
+  } catch (err) {
+    console.warn('[BehaviorService] recordSearch failed', err);
+  }
+}
+
 export function recordUpvote(answerId, tags = []) {
   if (!answerId) return { upvoted: false };
   try {
@@ -196,5 +215,15 @@ export function hasViewed(questionId) {
     return getBehavior().viewedQuestionIds.includes(questionId);
   } catch (err) {
     return false;
+  }
+}
+
+export function reset() {
+  try {
+    if (!hasLocalStorage()) return;
+    const defaultBehavior = createDefaultBehavior();
+    saveBehavior(defaultBehavior);
+  } catch (err) {
+    console.warn('[BehaviorService] reset failed', err);
   }
 }

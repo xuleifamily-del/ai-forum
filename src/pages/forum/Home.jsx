@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Edit3, Compass, Eye, MessageCircle, Clock, Sparkles, PenTool, Search } from 'lucide-react'
+import { Edit3, Compass, Eye, MessageCircle, Clock, Sparkles, PenTool, Search, RotateCcw } from 'lucide-react'
 import { aiFeatures } from './mockData.js'
 import { fetchQuestions } from '../../services/questionRepository.js'
+import { rankForRecommend } from '../../services/recommendService.js'
+import * as behaviorService from '../../services/behaviorService.js'
 
 function TagBadge({ text, color }) {
   const colors = {
@@ -103,17 +105,39 @@ function mapQuestionForCard(q) {
   }
 }
 
+const SESSION_KEY = 'aif-cache-home-recommend'
+const TTL_MS = 5 * 60 * 1000
+
 export default function Home() {
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [effectiveTagWeights, setEffectiveTagWeights] = useState({})
+  const [refreshKey, setRefreshKey] = useState(0)
 
   async function loadQuestions() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetchQuestions({ sort: 'hot', limit: 6 })
-      setQuestions(res.items)
+      const weights = behaviorService.getEffectiveTagWeights()
+      setEffectiveTagWeights(weights)
+
+      const cached = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null')
+      if (cached && cached.data && (Date.now() - cached.ts < TTL_MS)) {
+        setQuestions(cached.data)
+        setLoading(false)
+        return
+      }
+
+      const res = await fetchQuestions({ sort: 'hot', limit: 50 })
+      const all = res.items || []
+      const recommended = rankForRecommend(all, { tagWeights: weights, limit: 6 })
+      setQuestions(recommended)
+      try {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ts: Date.now(), data: recommended }))
+      } catch (_) {
+        // ignore
+      }
     } catch (err) {
       setError(err)
     } finally {
@@ -121,9 +145,25 @@ export default function Home() {
     }
   }
 
+  function handleResetPreferences() {
+    behaviorService.reset()
+    try {
+      sessionStorage.removeItem(SESSION_KEY)
+    } catch (_) {
+      // ignore
+    }
+    setRefreshKey((k) => k + 1)
+    alert('已重置偏好')
+  }
+
   useEffect(() => {
     loadQuestions()
-  }, [])
+  }, [refreshKey])
+
+  const topTags = Object.entries(effectiveTagWeights)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .filter(([, v]) => v > 0)
 
   return (
     <>
@@ -133,7 +173,7 @@ export default function Home() {
           aria-hidden="true"
         />
         <div className="relative z-10 max-w-2xl">
-          <h1 className="font-aif-sans text-3xl font-bold tracking-tight text-aif-foreground sm:text-4xl">
+          <h1 className="font-aif-sans text-2xl font-bold tracking-tight text-aif-foreground xs:text-2xl sm:text-3xl lg:text-4xl">
             问得出口，答得回来
           </h1>
           <p className="mt-4 text-base leading-relaxed text-aif-muted-foreground sm:text-lg">
@@ -142,14 +182,14 @@ export default function Home() {
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
               to="/ask"
-              className="inline-flex items-center gap-2 rounded-lg bg-aif-primary px-5 py-3 text-sm font-semibold text-aif-primary-foreground shadow-sm hover:bg-aif-primary-600 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-aif-primary px-5 py-3 text-sm font-semibold text-aif-primary-foreground shadow-sm hover:bg-aif-primary-600 transition-colors min-w-[44px] min-h-[44px]"
             >
               <Edit3 className="h-4 w-4" />
               去提问
             </Link>
             <Link
               to="/explore"
-              className="inline-flex items-center gap-2 rounded-lg border border-aif-border bg-aif-background px-5 py-3 text-sm font-semibold text-aif-foreground hover:bg-aif-muted transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg border border-aif-border bg-aif-background px-5 py-3 text-sm font-semibold text-aif-foreground hover:bg-aif-muted transition-colors min-w-[44px] min-h-[44px]"
             >
               <Compass className="h-4 w-4" />
               浏览问题
@@ -159,23 +199,42 @@ export default function Home() {
       </section>
 
       <section className="mt-10" aria-labelledby="recommend-title">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 id="recommend-title" className="text-xl font-bold text-aif-foreground">
-            为你推荐
-          </h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 id="recommend-title" className="text-xl font-bold text-aif-foreground">
+              为你推荐
+            </h2>
+            {topTags.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-aif-muted-foreground">你的兴趣</span>
+                {topTags.map(([tag], i) => (
+                  <TagBadge key={tag} text={tag} color={i === 0 ? 'primary' : 'muted'} />
+                ))}
+                <button
+                  type="button"
+                  onClick={handleResetPreferences}
+                  className="inline-flex items-center gap-1 rounded-md border border-aif-border bg-aif-card px-2 py-1 text-xs font-medium text-aif-muted-foreground transition-colors hover:border-aif-primary-300 hover:text-aif-primary min-h-[44px] min-w-[44px]"
+                  title="清空偏好"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  清空偏好
+                </button>
+              </div>
+            )}
+          </div>
           <Link to="/explore" className="text-sm font-medium text-aif-primary hover:text-aif-primary-700">
             查看更多
           </Link>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {loading ? (
-            <div className="text-center py-12 text-aif-muted-foreground">加载中…</div>
+            <div className="col-span-full text-center py-12 text-aif-muted-foreground">加载中…</div>
           ) : error ? (
-            <div className="text-center py-12">
+            <div className="col-span-full text-center py-12">
               <p className="text-aif-error">加载失败，请稍后重试</p>
               <button
                 onClick={loadQuestions}
-                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-aif-primary px-4 py-2 text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors"
+                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-aif-primary px-4 py-2 text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors min-w-[44px] min-h-[44px]"
               >
                 重试
               </button>

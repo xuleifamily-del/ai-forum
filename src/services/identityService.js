@@ -24,6 +24,25 @@ function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function generateNickname() {
+  const rawAdj = pickRandom(ADJECTIVES);
+  const adj = rawAdj.endsWith('的') ? rawAdj.slice(0, -1) : rawAdj;
+  const noun = pickRandom(NOUNS);
+  const randomSuffix = Math.random().toString(16).slice(2, 6).toUpperCase();
+  return `${adj}的${noun}#${randomSuffix}`;
+}
+
+function generateAvatarSeed() {
+  const palette = pickRandom(GRADIENT_PALETTES);
+  const angle = pickRandom(AVATAR_ANGLES);
+  return `${palette.color1}|${palette.color2}|${angle}`;
+}
+
+function saveIdentity(identity) {
+  StorageService.set(STORAGE_KEYS.IDENTITY, identity);
+  identityRef = identity;
+}
+
 let identityRef = null;
 
 const IdentityService = {
@@ -50,15 +69,8 @@ const IdentityService = {
 
   generate() {
     const id = generateUUID();
-
-    const rawAdj = pickRandom(ADJECTIVES);
-    const adj = rawAdj.endsWith('的') ? rawAdj.slice(0, -1) : rawAdj;
-    const noun = pickRandom(NOUNS);
-    const nickname = `${adj}的${noun}`;
-
-    const palette = pickRandom(GRADIENT_PALETTES);
-    const angle = pickRandom(AVATAR_ANGLES);
-    const avatarSeed = `${palette.color1}|${palette.color2}|${angle}`;
+    const nickname = generateNickname();
+    const avatarSeed = generateAvatarSeed();
 
     const now = Date.now();
     return {
@@ -96,6 +108,39 @@ const IdentityService = {
     const identity = this.getOrCreate();
     identity.lastActiveAt = Date.now();
     StorageService.set(STORAGE_KEYS.IDENTITY, identity);
+  },
+
+  resetIdentityKeepData() {
+    const old = this.getOrCreate();
+    const updated = {
+      ...old,
+      nickname: generateNickname(),
+      avatarSeed: generateAvatarSeed(),
+      lastActiveAt: Date.now(),
+    };
+    saveIdentity(updated);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('aif-identity-updated', { detail: updated }));
+    }
+    return updated;
+  },
+
+  generateNewIdentity({ clearBehavior = false } = {}) {
+    const fresh = {
+      id: generateUUID(),
+      nickname: generateNickname(),
+      avatarSeed: generateAvatarSeed(),
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
+    };
+    saveIdentity(fresh);
+    if (clearBehavior) {
+      StorageService.remove(STORAGE_KEYS.BEHAVIOR);
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('aif-identity-updated', { detail: fresh }));
+    }
+    return fresh;
   },
 };
 

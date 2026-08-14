@@ -12,7 +12,8 @@ import {
   Send,
   Wand2,
   User,
-  Loader2,
+  Square,
+  Bot,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -20,7 +21,15 @@ import { fetchQuestionDetail, incrementView, createAnswer, toggleUpvote } from '
 import * as aiService from '../../services/aiService.js'
 import * as aiInteractionService from '../../services/aiInteractionService.js'
 import * as behaviorService from '../../services/behaviorService.js'
+import { retrieveTopAnswers, parseCitations } from '../../services/reverseRagService.js'
 import { useForumApp } from '../../contexts/ForumAppContext.jsx'
+import SummaryCard from '../../components/forum/SummaryCard.jsx'
+import apiClient from '../../services/apiClient.js'
+import localFlagService from '../../services/localFlagService.js'
+import degradationService from '../../services/degradationService.js'
+import * as notificationService from '../../services/notificationService.js'
+import StorageService from '../../services/storageService.js'
+import { STORAGE_KEYS } from '../../constants/forumStorageKeys.js'
 
 function timeAgo(ts) {
   if (!ts) return ''
@@ -62,14 +71,255 @@ export default function Detail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [answer, setAnswer] = useState('')
-  const [aiAutoGenerating, setAiAutoGenerating] = useState(false)
-  const [aiStreamContent, setAiStreamContent] = useState('')
+  const [isGenerating, setIsGenerating] = useState(false)
   const [aiError, setAiError] = useState(null)
   const [polishing, setPolishing] = useState(false)
   const [polishHint, setPolishHint] = useState('')
   const [upvoteMap, setUpvoteMap] = useState({})
   const [upvoteError, setUpvoteError] = useState(null)
   const abortRef = useRef(null)
+  const summaryStatusTimerRef = useRef(null)
+  const autoAnswerFiredRef = useRef(false)
+  const lastClickTsRef = useRef(0)
+  const [autoAnswerText, setAutoAnswerText] = useState('')
+  const [autoAnswerGenerating, setAutoAnswerGenerating] = useState(false)
+  const [autoAnswerError, setAutoAnswerError] = useState(null)
+
+  const [summary, setSummary] = useState(null)
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const { aiState } = degradationService.getState()
+
+  const clearSummaryStatusTimer = () => {
+    if (summaryStatusTimerRef.current) {
+      clearTimeout(summaryStatusTimerRef.current)
+      summaryStatusTimerRef.current = null
+    }
+  }
+
+  const runGenerateAndPersistSummary = async (q, showLoading = true) => {
+    if (!q) return
+    const start = performance.now()
+    if (showLoading) {
+      setSummaryLoading(true)
+      setSummary((prev) => (prev ? { ...prev, status: 'regenerating' } : null))
+    }
+    try {
+      const answersForSummary = Array.isArray(q.answers)
+        ? q.answers.filter((a) => !a.isAI).slice(0, 5)
+        : []
+      const topAnswers =
+        answersForSummary.length >= 2
+          ? answersForSummary
+          : retrieveTopAnswers({
+              questionId: q.id,
+              title: q.title,
+              body: q.body,
+              tags: q.tags || [],
+              n: 5,
+            }).map((ra) => ({ id: ra.id, content: ra.content }))
+      const sourceAnswerIds = topAnswers.map((a) => a.id)
+      const { content, citations: rawCitations, mock } = await aiService.generateSummary({
+        questionId: q.id,
+        title: q.title,
+        body: q.body,
+        topAnswers,
+      })
+      const parsedCitations = parseCitations(content, sourceAnswerIds)
+      const mergedCitations = Array.isArray(rawCitations) && rawCitations.length > 0
+        ? rawCitations
+        : parsedCitations
+      const stored = await aiService.upsertSummaryToStorage({
+        questionId: q.id,
+        content,
+        sourceAnswerIds,
+        citations: mergedCitations,
+        status: 'updated',
+      })
+      setSummary(stored)
+      if (document.hidden) {
+        notificationService.notifySummaryReady({ questionId: q.id, title: q.title })
+      }
+      aiInteractionService.record({
+        type: 'summary',
+        success: true,
+        mock,
+        duration: performance.now() - start,
+        targetId: q.id,
+      })
+      clearSummaryStatusTimer()
+      summaryStatusTimerRef.current = setTimeout(() => {
+        setSummary((prev) => (prev ? { ...prev, status: 'stable' } : prev))
+      }, 30_000)
+    } catch (err) {
+      aiInteractionService.record({
+        type: 'summary',
+        success: false,
+        mock: true,
+        duration: performance.now() - start,
+        targetId: q.id,
+      })
+      setSummary((prev) => (prev ? { ...prev, status: 'outdated' } : null))
+    } finally {
+      setSummaryLoading(false)
+    }
+  }
+
+  const loadSummaryForQuestion = async (q) => {
+    if (!q) return
+    const local = aiService.getLocalSummary(q.id)
+    if (local) {
+      setSummary(local)
+    }
+    let remote = null
+    try {
+      remote = await apiClient.get(`/questions/${q.id}/summary`)
+    } catch (_) {
+      remote = null
+    }
+    if (remote && remote.content) {
+      const newer =
+        !local || (remote.updatedAt && local.updatedAt && remote.updatedAt > local.updatedAt)
+      if (newer) {
+        try {
+          const map = StorageService.get(STORAGE_KEYS.SUMMARIES) || {}
+          map[q.id] = remote
+          StorageService.set(STORAGE_KEYS.SUMMARIES, map)
+        } catch (_) {
+          // ignore
+        }
+        setSummary(remote)
+        return
+      }
+    }
+    if (!local && !remote) {
+      const nonAiAnswers = (q.answers || []).filter((a) => !a.isAI)
+      if (nonAiAnswers.length >= 2) {
+        runGenerateAndPersistSummary(q, false)
+      }
+    }
+  }
+
+  const runAiAnswerCore = async (options = {}) => {
+    const { auto = false } = options
+    if (!question) return { mock: false, content: '' }
+
+    const setContent = auto ? setAutoAnswerText : setAnswer
+    const setGen = auto ? setAutoAnswerGenerating : setIsGenerating
+    const setErr = auto ? setAutoAnswerError : setAiError
+
+    if (!auto && isGenerating) return { mock: false, content: '' }
+    if (auto && autoAnswerGenerating) return { mock: false, content: '' }
+
+    setGen(true)
+    setErr(null)
+    setContent('')
+    const start = performance.now()
+    const controller = new AbortController()
+    if (!auto) {
+      abortRef.current = controller
+    }
+    let finalContent = ''
+    let mockFlag = false
+    let topAnswersForSource = []
+
+    try {
+      topAnswersForSource = retrieveTopAnswers({
+        questionId: id,
+        title: question.title,
+        body: question.body,
+        tags: question.tags || [],
+        n: 3,
+      })
+
+      const topAnswersContent = topAnswersForSource.map((a) => a.content)
+
+      const { mock } = await aiService.answerStream(
+        {
+          questionId: id,
+          title: question.title,
+          body: question.body,
+          topAnswers: topAnswersContent,
+        },
+        (delta) => {
+          finalContent += delta
+          setContent((prev) => prev + delta)
+        },
+        auto ? undefined : controller.signal,
+      )
+      mockFlag = mock
+
+      aiInteractionService.record({
+        type: 'answer',
+        success: true,
+        mock,
+        duration: performance.now() - start,
+        subType: auto ? 'auto-initial' : undefined,
+      })
+
+      return { mock: mockFlag, content: finalContent, sourceAnswerIds: topAnswersForSource.map((a) => a.id) }
+    } catch (err) {
+      if (err?.name === 'AbortError') {
+        // 用户主动停止，不计为错误
+      } else {
+        aiInteractionService.record({
+          type: 'answer',
+          success: false,
+          mock: true,
+          duration: performance.now() - start,
+          subType: auto ? 'auto-initial' : undefined,
+        })
+        setErr(err?.message || 'AI 回答生成失败')
+
+        if (auto) {
+          degradationService.addPendingTask({
+            id: `init-answer-${id}`,
+            type: 'answer',
+            questionId: id,
+            payload: {
+              questionId: id,
+              title: question.title,
+              body: question.body,
+              topAnswers: topAnswersForSource.map((a) => a.content),
+            },
+          })
+        }
+      }
+      throw err
+    } finally {
+      setGen(false)
+      if (!auto) {
+        abortRef.current = null
+      }
+    }
+  }
+
+  const triggerAutoAiAnswer = async (q) => {
+    try {
+      const { content, sourceAnswerIds } = await runAiAnswerCore({ auto: true })
+      if (content && content.trim()) {
+        const newAnswer = await createAnswer(id, {
+          content,
+          authorId: 'ai-system',
+          authorName: 'AI 助手',
+          authorAvatarSeed: '#5b6cff|#8b5cf6|135',
+          isAi: true,
+          aiSourceAnswerIds: sourceAnswerIds,
+        })
+        setQuestion((prev) =>
+          prev
+            ? {
+                ...prev,
+                answers: [...prev.answers, newAnswer],
+                answerCount: prev.answerCount + 1,
+              }
+            : prev
+        )
+        setAutoAnswerText('')
+      }
+    } catch (err) {
+      // 错误已在 runAiAnswerCore 中处理
+    }
+  }
 
   const loadQuestion = async () => {
     try {
@@ -92,8 +342,49 @@ export default function Detail() {
           }
         }
         setUpvoteMap(map)
-        // 如果没有 AI 回答，自动生成
-        autoAiAnswer(res)
+        loadSummaryForQuestion(res)
+
+        const hasAIAnswer = (res.answers || []).some((a) => a.isAI)
+        const alreadyTriggered = localFlagService.getFlag(`ai-init:${id}`)
+        const iAmAuthor = identity?.id && identity.id === res.authorId
+        const currentAiState = degradationService.getState().aiState
+
+        if (
+          !loading &&
+          !error &&
+          res &&
+          !hasAIAnswer &&
+          !alreadyTriggered &&
+          iAmAuthor &&
+          !autoAnswerFiredRef.current &&
+          currentAiState !== 'unavailable'
+        ) {
+          autoAnswerFiredRef.current = true
+          localFlagService.setFlag(`ai-init:${id}`, true)
+          setTimeout(() => triggerAutoAiAnswer(res), 500)
+        } else if (
+          !hasAIAnswer &&
+          !alreadyTriggered &&
+          iAmAuthor &&
+          currentAiState === 'unavailable'
+        ) {
+          autoAnswerFiredRef.current = true
+          localFlagService.setFlag(`ai-init:${id}`, true)
+          degradationService.addPendingTask({
+            id: `init-answer-${id}`,
+            type: 'answer',
+            questionId: id,
+            payload: {
+              questionId: id,
+              title: res.title,
+              body: res.body,
+              topAnswers: (res.answers || []).slice(0, 3).map((a) => a.content),
+            },
+          })
+          if (import.meta.env?.DEV) {
+            console.debug(`[DegradationManager] skip auto answer, state=unavailable, added to pending tasks`)
+          }
+        }
       }
     } catch (err) {
       setError(err?.message || '加载失败')
@@ -103,65 +394,31 @@ export default function Detail() {
   }
 
   useEffect(() => {
+    aiInteractionService.markSessionEligible('detail')
     loadQuestion()
     incrementView(id).catch(() => {})
     return () => {
       abortRef.current?.abort()
+      clearSummaryStatusTimer()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  const autoAiAnswer = async (q) => {
-    if (aiAutoGenerating) return
-    const hasAiAnswer = (q.answers || []).some((a) => a.isAI)
-    if (hasAiAnswer) return
-    setAiAutoGenerating(true)
-    setAiError(null)
-    setAiStreamContent('')
-    const start = performance.now()
-    const controller = new AbortController()
-    abortRef.current = controller
-    try {
-      let fullContent = ''
-      const { mock } = await aiService.answerStream(
-        {
-          questionId: q.id,
-          title: q.title,
-          body: q.body,
-          topAnswers: (q.answers || []).slice(0, 3).map((a) => a.content),
-        },
-        (delta) => {
-          fullContent += delta
-          setAiStreamContent(fullContent)
-        },
-        controller.signal,
-      )
-      // 直接发布为 AI 回答
-      const newAnswer = await createAnswer(q.id, {
-        content: fullContent,
-        authorId: 'ai-system',
-        authorName: 'AI 助手',
-        authorAvatarSeed: '#5b6cff|#8b5cf6|135',
-        isAi: true,
-      })
-      setQuestion((prev) =>
-        prev
-          ? { ...prev, answers: [...prev.answers, newAnswer], answerCount: prev.answerCount + 1 }
-          : prev
-      )
-      aiInteractionService.record({ type: 'answer', success: true, mock, duration: performance.now() - start })
-    } catch (err) {
-      if (err?.name === 'AbortError') {
-        // 组件卸载导致中断，不计为错误
-      } else {
-        aiInteractionService.record({ type: 'answer', success: false, mock: true, duration: performance.now() - start })
-        setAiError(err?.message || 'AI 回答生成失败')
-      }
-    } finally {
-      setAiAutoGenerating(false)
-      setAiStreamContent('')
-      abortRef.current = null
+  const handleAiAnswer = async () => {
+    if (isGenerating) return
+    if (lastClickTsRef.current && Date.now() - lastClickTsRef.current < 500) return
+    lastClickTsRef.current = Date.now()
+    if (notificationService.getPermission() === 'default') {
+      notificationService.requestPermission()
     }
+    try {
+      await runAiAnswerCore({ auto: false })
+    } catch (_) {
+    }
+  }
+
+  const handleStopGenerate = () => {
+    abortRef.current?.abort()
   }
 
   const handlePolish = async () => {
@@ -204,7 +461,6 @@ export default function Detail() {
         ...prev,
         [a.id]: { upvotes: res.upvotes, upvoted: res.upvoted },
       }))
-      // recordUpvote 自身为 toggle，成功调用后由其管理客户端去重
       behaviorService.recordUpvote(a.id, question.tags || [])
     } catch (err) {
       setUpvoteMap((prev) => ({ ...prev, [a.id]: current }))
@@ -230,6 +486,36 @@ export default function Detail() {
       setAnswer('')
     } catch (err) {
       alert('发布失败：' + err.message)
+    }
+  }
+
+  const handleSummaryFeedback = async (type) => {
+    if (!question) return
+    if (summaryLoading) return
+    if (lastClickTsRef.current && Date.now() - lastClickTsRef.current < 500) return
+    lastClickTsRef.current = Date.now()
+    aiInteractionService.record({
+      type: 'feedback',
+      success: true,
+      mock: false,
+      targetId: question.id,
+      feedbackType: type,
+    })
+    aiInteractionService.recordFeedback({
+      questionId: question.id,
+      summaryId: summary?.id,
+      type,
+    })
+    await aiService.submitSummaryFeedback({
+      questionId: question.id,
+      summaryId: summary?.id,
+      type,
+    })
+    if (type === 'needsUpdate') {
+      if (notificationService.getPermission() === 'default') {
+        notificationService.requestPermission()
+      }
+      runGenerateAndPersistSummary(question, true)
     }
   }
 
@@ -269,41 +555,8 @@ export default function Detail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="flex flex-col gap-6 lg:col-span-2">
-          {question.aiSummary && (
-            <section className="rounded-lg border border-aif-border bg-aif-card p-5 shadow-sm" aria-label="AI 摘要">
-              <div className="border-l-4 border-aif-primary pl-4">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center rounded-full bg-aif-primary px-2.5 py-0.5 text-xs font-semibold text-aif-primary-foreground">
-                    AI 摘要
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-aif-success-bg px-2.5 py-0.5 text-xs font-medium text-aif-success">
-                    <CheckCircle2 className="h-3 w-3" />
-                    <span>{question.aiSummary.status || '已生成'}</span>
-                  </span>
-                </div>
-                <MarkdownRenderer>{question.aiSummary.content}</MarkdownRenderer>
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-muted px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-border transition-colors"
-                  >
-                    <ThumbsUp className="h-3.5 w-3.5" />
-                    <span>有帮助</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-muted px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-border transition-colors"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    <span>需更新</span>
-                  </button>
-                </div>
-              </div>
-            </section>
-          )}
-
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+        <div className="flex flex-col gap-6">
           <article className="rounded-lg border border-aif-border bg-aif-card p-5 shadow-sm">
             <h1 className="text-xl font-bold leading-snug text-aif-foreground sm:text-2xl">
               {question.title}
@@ -339,25 +592,59 @@ export default function Detail() {
             </div>
           </article>
 
+          {(summary || summaryLoading) && (
+            <SummaryCard
+              content={summary?.content || ''}
+              status={summary?.status || 'stable'}
+              generatedAt={summary?.generatedAt}
+              updatedAt={summary?.updatedAt}
+              citations={summary?.citations || []}
+              sourceAnswerIds={summary?.sourceAnswerIds || []}
+              isLoading={summaryLoading && !summary?.content}
+              onFeedback={handleSummaryFeedback}
+            />
+          )}
+
           <section className="flex flex-col gap-4" aria-label="回答列表">
             <h2 className="text-lg font-bold text-aif-foreground">{question.answers?.length || 0} 个回答</h2>
             {upvoteError && (
               <p className="text-xs text-aif-error">{upvoteError}</p>
             )}
 
-            {aiAutoGenerating && (
-              <article className="relative rounded-lg border border-aif-primary-200 bg-aif-primary-50 p-5 shadow-sm">
-                <div className="mb-3 flex items-center gap-2">
+            {autoAnswerError && (
+              <div className="rounded-lg border border-aif-error/30 bg-aif-error/5 p-3">
+                <p className="text-xs text-aif-error">
+                  AI 初始回答生成失败，稍后可点击下方「AI 帮我答」按钮重试
+                </p>
+              </div>
+            )}
+
+            {(autoAnswerGenerating || autoAnswerText) && !autoAnswerError && (
+              <article
+                className="relative rounded-lg border p-5 shadow-sm bg-aif-primary-50"
+                style={{ borderLeft: '4px solid #5b6cff' }}
+              >
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-aif-primary-100 to-aif-primary-200 text-aif-primary">
+                    <Bot className="h-3.5 w-3.5" />
+                  </div>
                   <span className="inline-flex items-center gap-1 rounded-md bg-aif-primary px-2 py-1 text-xs font-semibold text-aif-primary-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    AI 助手正在生成回答…
+                    <Sparkles className="h-3 w-3" />
+                    AI 助手
                   </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-aif-primary-100 px-2.5 py-0.5 text-[10px] font-medium text-aif-primary">
+                    <CheckCircle2 className="h-3 w-3" />
+                    AI 生成·综合社区内容
+                  </span>
+                  {autoAnswerGenerating && (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-aif-muted-foreground">
+                      <RefreshCw className="h-3 w-3 animate-spin" />
+                      生成中…
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs text-aif-muted-foreground">刚刚</span>
                 </div>
-                {aiStreamContent ? (
-                  <MarkdownRenderer>{aiStreamContent}</MarkdownRenderer>
-                ) : (
-                  <p className="text-sm text-aif-muted-foreground">正在思考中…</p>
-                )}
+                <MarkdownRenderer>{autoAnswerText}</MarkdownRenderer>
               </article>
             )}
 
@@ -368,18 +655,29 @@ export default function Detail() {
               return (
                 <article
                   key={a.id}
-                  className={`relative rounded-lg border p-5 shadow-sm ${
+                  id={`answer-${a.id}`}
+                  className={`relative rounded-lg border p-4 shadow-sm sm:p-5 ${
                     isAi
-                      ? 'border-aif-primary-200 bg-aif-primary-50'
+                      ? 'bg-aif-primary-50'
                       : 'border-aif-border bg-aif-card'
                   }`}
+                  style={isAi ? { borderLeft: '4px solid #5b6cff' } : undefined}
                 >
-                  <div className="mb-3 flex items-center gap-2">
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
                     {isAi ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-aif-primary px-2 py-1 text-xs font-semibold text-aif-primary-foreground">
-                        <Sparkles className="h-3 w-3" />
-                        {authorName}
-                      </span>
+                      <>
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-aif-primary-100 to-aif-primary-200 text-aif-primary">
+                          <Bot className="h-3.5 w-3.5" />
+                        </div>
+                        <span className="inline-flex items-center gap-1 rounded-md bg-aif-primary px-2 py-1 text-xs font-semibold text-aif-primary-foreground">
+                          <Sparkles className="h-3 w-3" />
+                          {authorName}
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-aif-primary-100 px-2.5 py-0.5 text-[10px] font-medium text-aif-primary">
+                          <CheckCircle2 className="h-3 w-3" />
+                          AI 生成·综合社区内容
+                        </span>
+                      </>
                     ) : (
                       <div className="inline-flex items-center gap-2">
                         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-aif-primary-300 to-aif-success text-white">
@@ -420,11 +718,34 @@ export default function Detail() {
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-base font-semibold text-aif-foreground">撰写回答</h3>
               <div className="flex flex-wrap items-center gap-2">
+                {isGenerating ? (
+                  <button
+                    type="button"
+                    onClick={handleStopGenerate}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors min-w-[44px] min-h-[44px]"
+                  >
+                    <Square className="h-3.5 w-3.5 text-aif-error" />
+                    <span>停止</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isGenerating) return
+                      handleAiAnswer()
+                    }}
+                    disabled={isGenerating || aiState === 'unavailable'}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-w-[44px] min-h-[44px]"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-aif-primary" />
+                    <span>AI 帮我答</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={handlePolish}
-                  disabled={polishing || aiAutoGenerating}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={polishing || isGenerating || aiState === 'unavailable'}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-w-[44px] min-h-[44px]"
                 >
                   <Wand2 className="h-3.5 w-3.5 text-aif-primary" />
                   <span>{polishing ? '润色中…' : 'AI 润色'}</span>
@@ -439,7 +760,7 @@ export default function Detail() {
                 if (e.target.value.trim() && polishHint) setPolishHint('')
               }}
               placeholder="输入你的回答，支持 Markdown 格式…"
-              className="w-full resize-y rounded-lg border border-aif-input bg-aif-card px-4 py-3 text-base leading-relaxed text-aif-foreground placeholder:text-aif-muted-foreground focus:border-aif-primary focus:outline-none focus:ring-2 focus:ring-aif-primary/20"
+              className="w-full resize-y rounded-lg border border-aif-input bg-aif-card p-3 sm:px-4 sm:py-3 text-base leading-relaxed text-aif-foreground placeholder:text-aif-muted-foreground focus:border-aif-primary focus:outline-none focus:ring-2 focus:ring-aif-primary/20"
             />
             {(aiError || polishHint) && (
               <div className="mt-2 text-xs">
@@ -451,7 +772,7 @@ export default function Detail() {
               <button
                 type="button"
                 onClick={() => setAnswer('')}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-aif-border bg-aif-card px-5 py-2.5 text-sm font-semibold text-aif-foreground hover:bg-aif-muted transition-colors"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-aif-border bg-aif-card px-5 py-2.5 text-sm font-semibold text-aif-foreground hover:bg-aif-muted transition-colors w-full sm:w-auto min-w-[44px] min-h-[44px]"
               >
                 清空
               </button>
@@ -459,7 +780,7 @@ export default function Detail() {
                 type="button"
                 onClick={handlePublishAnswer}
                 disabled={!answer.trim()}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-aif-primary px-5 py-2.5 text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-aif-primary px-5 py-2.5 text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto sm:min-w-[120px] min-h-[44px]"
               >
                 <Send className="h-4 w-4" />
                 发布回答
@@ -477,14 +798,14 @@ export default function Detail() {
             <div className="space-y-2">
               <Link
                 to="/ask"
-                className="block w-full rounded-lg border border-aif-border bg-aif-primary px-4 py-3 text-center text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors"
+                className="block w-full rounded-lg border border-aif-border bg-aif-primary px-4 py-3 text-center text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors min-h-[44px]"
               >
                 基于此问题提问新帖
               </Link>
-              <button className="w-full rounded-lg border border-aif-border bg-aif-muted px-4 py-3 text-sm font-medium text-aif-foreground hover:bg-aif-border transition-colors">
+              <button className="w-full rounded-lg border border-aif-border bg-aif-muted px-4 py-3 text-sm font-medium text-aif-foreground hover:bg-aif-border transition-colors min-h-[44px]">
                 收藏问题
               </button>
-              <button className="w-full rounded-lg border border-aif-border bg-aif-muted px-4 py-3 text-sm font-medium text-aif-foreground hover:bg-aif-border transition-colors">
+              <button className="w-full rounded-lg border border-aif-border bg-aif-muted px-4 py-3 text-sm font-medium text-aif-foreground hover:bg-aif-border transition-colors min-h-[44px]">
                 分享链接
               </button>
             </div>

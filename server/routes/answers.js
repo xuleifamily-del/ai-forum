@@ -6,7 +6,7 @@ const router = Router();
 // POST /api/questions/:questionId/answers — create an answer
 router.post('/:questionId/answers', async (req, res, next) => {
   try {
-    const { content, authorId, authorName, authorAvatarSeed, isAi } =
+    const { content, authorId, authorName, authorAvatarSeed, isAi, aiSourceAnswerIds } =
       req.body || {};
     if (!content || !authorId) {
       return res.status(400).json({ error: 'content and authorId are required' });
@@ -18,6 +18,7 @@ router.post('/:questionId/answers', async (req, res, next) => {
       authorName,
       authorAvatarSeed,
       isAi,
+      aiSourceAnswerIds,
     });
     res.status(201).json(answer);
   } catch (err) {

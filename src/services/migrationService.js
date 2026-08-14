@@ -9,6 +9,38 @@ const MigrationService = {
       return allData;
     },
     2: function migrateV1ToV2(allData) {
+      if (!allData[STORAGE_KEYS.AI_STATE]) {
+        allData[STORAGE_KEYS.AI_STATE] = {
+          state: 'available',
+          reason: null,
+          lastCheckAt: 0,
+          consecutiveFailures: 0,
+        };
+      }
+      if (!allData[STORAGE_KEYS.PENDING_AI_TASKS]) {
+        allData[STORAGE_KEYS.PENDING_AI_TASKS] = [];
+      }
+      return allData;
+    },
+    3: function migrateV2ToV3(allData) {
+      if (!allData[STORAGE_KEYS.SUMMARIES] || typeof allData[STORAGE_KEYS.SUMMARIES] !== 'object') {
+        allData[STORAGE_KEYS.SUMMARIES] = {};
+      }
+      return allData;
+    },
+    4: function migrateV3ToV4(allData) {
+      if (!allData[STORAGE_KEYS.FLAGS] || typeof allData[STORAGE_KEYS.FLAGS] !== 'object') {
+        allData[STORAGE_KEYS.FLAGS] = {};
+      }
+      return allData;
+    },
+    5: function migrateV4ToV5(allData) {
+      if (!Array.isArray(allData[STORAGE_KEYS.AI_FEEDBACK])) {
+        allData[STORAGE_KEYS.AI_FEEDBACK] = [];
+      }
+      if (!Array.isArray(allData[STORAGE_KEYS.AI_SESSIONS])) {
+        allData[STORAGE_KEYS.AI_SESSIONS] = [];
+      }
       return allData;
     },
   },

@@ -13,6 +13,27 @@ export async function fetchQuestions(params = {}) {
 }
 
 /**
+ * 分页获取问题列表
+ * @param {{ page?: number, pageSize?: number, sort?: 'latest'|'hot', category?: string }} params
+ * @returns {Promise<{ data: import('../types/forum.js').Question[], hasNext: boolean, total: number }>}
+ */
+export async function listQuestionsPage({ page = 1, pageSize = 10, sort = 'latest', category } = {}) {
+  const numericPage = Number(page) || 1;
+  const numericSize = Number(pageSize) || 10;
+  const offset = (numericPage - 1) * numericSize;
+  const res = await fetchQuestions({
+    sort,
+    limit: numericSize,
+    offset,
+    tag: category || undefined,
+  });
+  const items = res.items || [];
+  const total = res.total || 0;
+  const hasNext = offset + items.length < total;
+  return { data: items, hasNext, total };
+}
+
+/**
  * 获取问题详情（含回答列表与 AI 摘要）
  * @param {string} id
  * @returns {Promise<(import('../types/forum.js').Question & { answers: import('../types/forum.js').Answer[], aiSummary: import('../types/forum.js').AISummary | null }) | null>}

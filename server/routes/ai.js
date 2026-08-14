@@ -10,7 +10,14 @@ import {
   buildExpandMessages,
   buildDraftMessages,
   buildAnswerMessages,
+  buildSummaryMessages,
+  buildSearchRewriteMessages,
+  buildSearchSummaryMessages,
 } from '../services/aiPromptService.js';
+import * as feedbackRepository from '../repositories/feedbackRepository.js';
+import * as summaryRepository from '../repositories/summaryRepository.js';
+
+const inMemoryFeedback = new Map();
 
 const router = Router();
 
@@ -224,6 +231,210 @@ router.post('/answer', rateLimit, async (req, res, next) => {
   } finally {
     req.off('close', onClose);
     if (!res.writableEnded) res.end();
+  }
+});
+
+// POST /api/ai/search-rewrite — rewrite a search query into standardized terms
+router.post('/search-rewrite', rateLimit, async (req, res, next) => {
+  const { query } = req.body || {};
+  if (typeof query !== 'string' || !query.trim()) {
+    return res.status(400).json({ error: 'query is required' });
+  }
+  try {
+    const messages = buildSearchRewriteMessages(query.trim());
+    const { text, mock } = await chat({
+      messages,
+      engine: 'search-rewrite',
+      mockParams: { query: query.trim(), type: 'rewrite' },
+    });
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      const trimmed = (text || '').trim();
+      const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
+      try {
+        parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+      } catch {
+        parsed = null;
+      }
+    }
+    if (!parsed || typeof parsed.rewritten !== 'string' || !Array.isArray(parsed.keywords)) {
+      const fallback = {
+        rewritten: query.trim(),
+        keywords: query.trim().split(/\s+/).filter(Boolean),
+      };
+      return res.json({ rewritten: fallback.rewritten, keywords: fallback.keywords, mock: mock || true });
+    }
+    return res.json({
+      rewritten: parsed.rewritten,
+      keywords: parsed.keywords,
+      mock,
+    });
+  } catch (err) {
+    console.error('[ai] search-rewrite error:', err?.message || err);
+    try {
+      const mockText = getMockResponse('search-rewrite', { query: query.trim(), type: 'rewrite' });
+      let parsed;
+      try {
+        parsed = JSON.parse(mockText);
+      } catch {
+        parsed = null;
+      }
+      if (parsed && typeof parsed.rewritten === 'string' && Array.isArray(parsed.keywords)) {
+        return res.json({ rewritten: parsed.rewritten, keywords: parsed.keywords, mock: true });
+      }
+      const fallback = {
+        rewritten: query.trim(),
+        keywords: query.trim().split(/\s+/).filter(Boolean),
+      };
+      return res.json({ rewritten: fallback.rewritten, keywords: fallback.keywords, mock: true });
+    } catch {
+      const fallback = {
+        rewritten: query.trim(),
+        keywords: query.trim().split(/\s+/).filter(Boolean),
+      };
+      return res.json({ rewritten: fallback.rewritten, keywords: fallback.keywords, mock: true });
+    }
+  }
+});
+
+// POST /api/ai/search-summary — generate AI summary for search results
+router.post('/search-summary', rateLimit, async (req, res, next) => {
+  const { query, rewritten, topQuestions } = req.body || {};
+  if (typeof query !== 'string' || !query.trim()) {
+    return res.status(400).json({ error: 'query is required' });
+  }
+  if (topQuestions !== undefined && !Array.isArray(topQuestions)) {
+    return res.status(400).json({ error: 'topQuestions must be an array' });
+  }
+  const safeTopQuestions = Array.isArray(topQuestions)
+    ? topQuestions.filter(q => q && typeof q === 'object').map(q => ({
+        id: q.id,
+        title: q.title,
+        excerpt: q.excerpt,
+        tags: q.tags,
+      }))
+    : [];
+  const mockParams = {
+    query: query.trim(),
+    rewritten: typeof rewritten === 'string' ? rewritten.trim() : query.trim(),
+    topQuestions: safeTopQuestions,
+    type: 'search-summary',
+  };
+  try {
+    const messages = buildSearchSummaryMessages({
+      query: query.trim(),
+      rewritten: typeof rewritten === 'string' ? rewritten.trim() : query.trim(),
+      topQuestions: safeTopQuestions,
+    });
+    const { text, mock } = await chat({
+      messages,
+      engine: 'search-summary',
+      mockParams,
+    });
+    return res.json({ content: text, mock });
+  } catch (err) {
+    console.error('[ai] search-summary error:', err?.message || err);
+    try {
+      return res.json({
+        content: getMockResponse('search-summary', mockParams),
+        mock: true,
+      });
+    } catch {
+      return res.json({ content: '', mock: true });
+    }
+  }
+});
+
+// POST /api/ai/summary — generate an AI summary from top answers
+router.post('/summary', rateLimit, async (req, res, next) => {
+  const { questionId, title, body, topAnswers } = req.body || {};
+  if (typeof title !== 'string' || !title.trim()) {
+    return res.status(400).json({ error: 'title is required' });
+  }
+  if (typeof body !== 'string' || !body.trim()) {
+    return res.status(400).json({ error: 'body is required' });
+  }
+  if (topAnswers !== undefined && !Array.isArray(topAnswers)) {
+    return res.status(400).json({ error: 'topAnswers must be an array' });
+  }
+  const safeTopAnswers = Array.isArray(topAnswers) ? topAnswers : [];
+  const citations = safeTopAnswers.map((ans, idx) => ({
+    index: idx + 1,
+    answerId: ans?.id,
+  }));
+  const mockParams = { title, topAnswers: safeTopAnswers, type: 'summary' };
+  try {
+    const messages = buildSummaryMessages({ title, body, topAnswers: safeTopAnswers });
+    const { text: resultText, mock } = await chat({
+      messages,
+      engine: 'summary',
+      mockParams,
+    });
+    return res.json({ content: resultText, citations, mock });
+  } catch (err) {
+    console.error('[ai] summary error:', err?.message || err);
+    try {
+      return res.json({
+        content: getMockResponse('summary', mockParams),
+        citations,
+        mock: true,
+      });
+    } catch {
+      return res.json({ content: '', citations, mock: true });
+    }
+  }
+});
+
+// POST /api/ai/summary/feedback — record feedback for a summary
+router.post('/summary/feedback', rateLimit, async (req, res, next) => {
+  const { questionId, summaryId, type, comment } = req.body || {};
+  const validTypes = ['helpful', 'needsUpdate', 'inaccurate'];
+  if (!validTypes.includes(type)) {
+    return res.status(400).json({ error: 'invalid type' });
+  }
+
+  let feedbackCount = 0;
+  let statusResult = null;
+
+  try {
+    const valueMap = { helpful: 1, needsUpdate: 0, inaccurate: -1 };
+    try {
+      await feedbackRepository.createFeedback({
+        identityId: 'anonymous',
+        targetId: summaryId || questionId,
+        targetType: 'SUMMARY',
+        value: valueMap[type],
+        comment,
+      });
+    } catch (dbErr) {
+      const key = summaryId || questionId || 'default';
+      const existing = inMemoryFeedback.get(key) || { helpful: 0, needsUpdate: 0, inaccurate: 0 };
+      existing[type] = (existing[type] || 0) + 1;
+      inMemoryFeedback.set(key, existing);
+    }
+
+    if (summaryId) {
+      try {
+        const result = await summaryRepository.recordFeedback({ summaryId, type, comment });
+        feedbackCount = result.feedbackCount;
+        statusResult = result.status;
+      } catch {
+        const key = summaryId;
+        const existing = inMemoryFeedback.get(key) || { helpful: 0, needsUpdate: 0, inaccurate: 0 };
+        feedbackCount = existing.helpful + existing.needsUpdate + existing.inaccurate;
+      }
+    } else {
+      const key = questionId || 'default';
+      const existing = inMemoryFeedback.get(key) || { helpful: 0, needsUpdate: 0, inaccurate: 0 };
+      feedbackCount = existing.helpful + existing.needsUpdate + existing.inaccurate;
+    }
+
+    return res.json({ ok: true, feedbackCount, status: statusResult });
+  } catch (err) {
+    console.error('[ai] summary feedback error:', err?.message || err);
+    return res.json({ ok: true, feedbackCount: 0 });
   }
 });
 

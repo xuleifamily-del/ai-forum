@@ -10,6 +10,11 @@ export const STORAGE_KEYS = {
   SEED_DATA: 'aiforum_seed',
   SCHEMA_VERSION: 'aiforum_schema_v',
   AUTH_TOKEN: 'aiforum_auth_token',
+  AI_STATE: 'aif:ai:state',
+  PENDING_AI_TASKS: 'aif:pending:ai',
+  FLAGS: 'aif:flags',
+  AI_FEEDBACK: 'aif:ai:feedback',
+  AI_SESSIONS: 'aif:ai:sessions',
 };
 
-export const SCHEMA_CURRENT_VERSION = 1;
+export const SCHEMA_CURRENT_VERSION = 5;
