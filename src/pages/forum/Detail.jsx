@@ -80,6 +80,7 @@ export default function Detail() {
   const abortRef = useRef(null)
   const summaryStatusTimerRef = useRef(null)
   const autoAnswerFiredRef = useRef(false)
+  const pollRef = useRef(null) // AI 回答自动出现轮询定时器
   const lastClickTsRef = useRef(0)
   const [autoAnswerText, setAutoAnswerText] = useState('')
   const [autoAnswerGenerating, setAutoAnswerGenerating] = useState(false)
@@ -293,7 +294,49 @@ export default function Detail() {
     }
   }
 
+  const stopAiAnswerPoll = () => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current)
+      pollRef.current = null
+    }
+  }
+
+  const startAiAnswerPoll = (q) => {
+    stopAiAnswerPoll()
+    let ticks = 0
+    const MAX_TICKS = 30 // 最多轮询 30 * 2s = 60s
+    pollRef.current = setInterval(async () => {
+      ticks += 1
+      try {
+        const fresh = await fetchQuestionDetail(q.id)
+        const aiAnswer = (fresh?.answers || []).find((a) => a.isAI)
+        if (aiAnswer) {
+          // 后端已生成 AI 回答，合并到本地 state
+          setQuestion((prev) => {
+            if (!prev) return fresh
+            const existing = new Set((prev.answers || []).map((a) => a.id))
+            const mergedAnswers = Array.isArray(fresh.answers)
+              ? [
+                  ...(prev.answers || []).filter((a) => !a.isAI),
+                  ...fresh.answers.filter((a) => a.isAI || !existing.has(a.id)),
+                ]
+              : (prev.answers || [])
+            return { ...prev, answers: mergedAnswers, answerCount: fresh.answerCount ?? prev.answerCount }
+          })
+          stopAiAnswerPoll()
+        }
+      } catch (_) {
+        // 轮询出错不抛异常，静默重试直到达到上限
+      }
+      if (ticks >= MAX_TICKS) {
+        stopAiAnswerPoll()
+      }
+    }, 2000)
+  }
+
   const triggerAutoAiAnswer = async (q) => {
+    // 启动后端轮询兜底（即使前端流式中断/失败，后端生成的回答也会出现）
+    startAiAnswerPoll(q)
     try {
       const { content, sourceAnswerIds } = await runAiAnswerCore({ auto: true })
       if (content && content.trim()) {
@@ -315,9 +358,10 @@ export default function Detail() {
             : prev
         )
         setAutoAnswerText('')
+        stopAiAnswerPoll()
       }
     } catch (err) {
-      // 错误已在 runAiAnswerCore 中处理
+      // 错误已在 runAiAnswerCore 中处理；保持轮询等待后端兜底生成
     }
   }
 
@@ -346,7 +390,6 @@ export default function Detail() {
 
         const hasAIAnswer = (res.answers || []).some((a) => a.isAI)
         const alreadyTriggered = localFlagService.getFlag(`ai-init:${id}`)
-        const iAmAuthor = identity?.id && identity.id === res.authorId
         const currentAiState = degradationService.getState().aiState
 
         if (
@@ -355,34 +398,24 @@ export default function Detail() {
           res &&
           !hasAIAnswer &&
           !alreadyTriggered &&
-          iAmAuthor &&
-          !autoAnswerFiredRef.current &&
-          currentAiState !== 'unavailable'
+          !autoAnswerFiredRef.current
         ) {
           autoAnswerFiredRef.current = true
           localFlagService.setFlag(`ai-init:${id}`, true)
-          setTimeout(() => triggerAutoAiAnswer(res), 500)
-        } else if (
-          !hasAIAnswer &&
-          !alreadyTriggered &&
-          iAmAuthor &&
-          currentAiState === 'unavailable'
-        ) {
-          autoAnswerFiredRef.current = true
-          localFlagService.setFlag(`ai-init:${id}`, true)
-          degradationService.addPendingTask({
-            id: `init-answer-${id}`,
-            type: 'answer',
-            questionId: id,
-            payload: {
+          if (currentAiState === 'unavailable') {
+            degradationService.addPendingTask({
+              id: `init-answer-${id}`,
+              type: 'answer',
               questionId: id,
-              title: res.title,
-              body: res.body,
-              topAnswers: (res.answers || []).slice(0, 3).map((a) => a.content),
-            },
-          })
-          if (import.meta.env?.DEV) {
-            console.debug(`[DegradationManager] skip auto answer, state=unavailable, added to pending tasks`)
+              payload: {
+                questionId: id,
+                title: res.title,
+                body: res.body,
+                topAnswers: (res.answers || []).slice(0, 3).map((a) => a.content),
+              },
+            })
+          } else {
+            setTimeout(() => triggerAutoAiAnswer(res), 300)
           }
         }
       }
@@ -400,6 +433,7 @@ export default function Detail() {
     return () => {
       abortRef.current?.abort()
       clearSummaryStatusTimer()
+      stopAiAnswerPoll()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
