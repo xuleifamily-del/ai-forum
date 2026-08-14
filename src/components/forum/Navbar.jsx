@@ -80,7 +80,7 @@ export default function Navbar({ active = 'home', identityAvatarStyle, avatarTex
 
           {/* 提问按钮 */}
           <Link
-            to="/ask"
+            to={user ? "/ask" : "/login"}
             className="inline-flex items-center gap-1.5 rounded-md bg-aif-primary px-3 py-2 text-sm font-semibold text-aif-primary-foreground hover:bg-aif-primary-600 transition-colors"
           >
             <Plus className="h-4 w-4" />
