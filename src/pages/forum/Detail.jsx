@@ -12,7 +12,7 @@ import {
   Send,
   Wand2,
   User,
-  Square,
+  Loader2,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -62,7 +62,8 @@ export default function Detail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [answer, setAnswer] = useState('')
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [aiAutoGenerating, setAiAutoGenerating] = useState(false)
+  const [aiStreamContent, setAiStreamContent] = useState('')
   const [aiError, setAiError] = useState(null)
   const [polishing, setPolishing] = useState(false)
   const [polishHint, setPolishHint] = useState('')
@@ -91,6 +92,8 @@ export default function Detail() {
           }
         }
         setUpvoteMap(map)
+        // 如果没有 AI 回答，自动生成
+        autoAiAnswer(res)
       }
     } catch (err) {
       setError(err?.message || '加载失败')
@@ -108,43 +111,57 @@ export default function Detail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  const handleAiAnswer = async () => {
-    if (isGenerating || !question) return
-    setIsGenerating(true)
+  const autoAiAnswer = async (q) => {
+    if (aiAutoGenerating) return
+    const hasAiAnswer = (q.answers || []).some((a) => a.isAI)
+    if (hasAiAnswer) return
+    setAiAutoGenerating(true)
     setAiError(null)
-    setAnswer('')
+    setAiStreamContent('')
     const start = performance.now()
     const controller = new AbortController()
     abortRef.current = controller
     try {
+      let fullContent = ''
       const { mock } = await aiService.answerStream(
         {
-          questionId: id,
-          title: question.title,
-          body: question.body,
-          topAnswers: (question.answers || []).slice(0, 3).map((a) => a.content),
+          questionId: q.id,
+          title: q.title,
+          body: q.body,
+          topAnswers: (q.answers || []).slice(0, 3).map((a) => a.content),
         },
         (delta) => {
-          setAnswer((prev) => prev + delta)
+          fullContent += delta
+          setAiStreamContent(fullContent)
         },
         controller.signal,
+      )
+      // 直接发布为 AI 回答
+      const newAnswer = await createAnswer(q.id, {
+        content: fullContent,
+        authorId: 'ai-system',
+        authorName: 'AI 助手',
+        authorAvatarSeed: '#5b6cff|#8b5cf6|135',
+        isAi: true,
+      })
+      setQuestion((prev) =>
+        prev
+          ? { ...prev, answers: [...prev.answers, newAnswer], answerCount: prev.answerCount + 1 }
+          : prev
       )
       aiInteractionService.record({ type: 'answer', success: true, mock, duration: performance.now() - start })
     } catch (err) {
       if (err?.name === 'AbortError') {
-        // 用户主动停止，不计为错误
+        // 组件卸载导致中断，不计为错误
       } else {
         aiInteractionService.record({ type: 'answer', success: false, mock: true, duration: performance.now() - start })
         setAiError(err?.message || 'AI 回答生成失败')
       }
     } finally {
-      setIsGenerating(false)
+      setAiAutoGenerating(false)
+      setAiStreamContent('')
       abortRef.current = null
     }
-  }
-
-  const handleStopGenerate = () => {
-    abortRef.current?.abort()
   }
 
   const handlePolish = async () => {
@@ -328,6 +345,22 @@ export default function Detail() {
               <p className="text-xs text-aif-error">{upvoteError}</p>
             )}
 
+            {aiAutoGenerating && (
+              <article className="relative rounded-lg border border-aif-primary-200 bg-aif-primary-50 p-5 shadow-sm">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-md bg-aif-primary px-2 py-1 text-xs font-semibold text-aif-primary-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    AI 助手正在生成回答…
+                  </span>
+                </div>
+                {aiStreamContent ? (
+                  <MarkdownRenderer>{aiStreamContent}</MarkdownRenderer>
+                ) : (
+                  <p className="text-sm text-aif-muted-foreground">正在思考中…</p>
+                )}
+              </article>
+            )}
+
             {(question.answers || []).map((a) => {
               const isAi = !!a.isAI
               const authorName = isAi ? 'AI 助手' : a.authorName
@@ -387,29 +420,10 @@ export default function Detail() {
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-base font-semibold text-aif-foreground">撰写回答</h3>
               <div className="flex flex-wrap items-center gap-2">
-                {isGenerating ? (
-                  <button
-                    type="button"
-                    onClick={handleStopGenerate}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors"
-                  >
-                    <Square className="h-3.5 w-3.5 text-aif-error" />
-                    <span>停止</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleAiAnswer}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors"
-                  >
-                    <Sparkles className="h-3.5 w-3.5 text-aif-primary" />
-                    <span>AI 帮我答</span>
-                  </button>
-                )}
                 <button
                   type="button"
                   onClick={handlePolish}
-                  disabled={polishing || isGenerating}
+                  disabled={polishing || aiAutoGenerating}
                   className="inline-flex items-center gap-1.5 rounded-md border border-aif-border bg-aif-card px-3 py-1.5 text-xs font-medium text-aif-foreground hover:bg-aif-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <Wand2 className="h-3.5 w-3.5 text-aif-primary" />
